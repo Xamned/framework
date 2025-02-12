@@ -1,0 +1,31 @@
+{
+    "name": "xamned/framework",
+    "description": "Фреймворк создан разработчиками Xamned. Является платформой для изучения базового поведения приложения созданного на PHP. Фреймворк не является production-ready реализацией и не предназначен для коммерческого использования.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "xamned\\framework\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Kudryashov Maxim",
+            "email": "e.example@mail.ru"
+        },
+        {
+            "name": "Lyashenko Denis",
+            "email": "lyashenko.lanceru@ya.ru"
+        }
+    ],
+    "require": {
+        "psr/http-message": "^2.0",
+        "psr/container": "^2.0",
+        "psr/http-factory": "^1.1",
+        "php": "^8.2"
+    },
+    "require-dev": {
+        "codeception/codeception": "^5.1",
+        "codeception/module-phpbrowser": "^3.0",
+        "codeception/module-asserts": "^3.0"
+    }
+}
