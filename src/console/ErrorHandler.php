@@ -2,26 +2,28 @@
 
 namespace xamned\framework\console;
 
-use xamned\framework\contracts\console\ConsoleOutputInterface;
 use xamned\framework\contracts\ErrorHandlerInterface;
 use \Throwable;
 
 class ErrorHandler implements ErrorHandlerInterface
 {
     public function __construct(
-        private readonly ConsoleOutputInterface $output,
+        private readonly AnsiLineFormater $lineFormater,
     ) {
     }
 
     public function handle(Throwable $e): string
     {
+        $message = ' ';
+
         foreach(explode(PHP_EOL, (string) $e) as $key => $row) {
             if ($key === 0) {
-                $this->output->stdout(
-                    PHP_EOL . PHP_EOL . "  $row" . PHP_EOL, 
-                    ConsoleColors::BG_RED->value, ConsoleColors::FG_WHITE->value
+                $message .= $this->lineFormater->format(
+                    PHP_EOL . PHP_EOL . "  $row" . PHP_EOL,
+                    [ConsoleColors::BG_RED->value, ConsoleColors::FG_WHITE->value]
                 );
-                $this->output->writeLn(2);
+
+                $message .= PHP_EOL . PHP_EOL;
                 continue;
             }
 
@@ -29,10 +31,10 @@ class ErrorHandler implements ErrorHandlerInterface
                 continue;
             }
 
-            $this->output->stdout($row);
-            $this->output->writeLn(2);
+            $message .= $this->lineFormater->format($row);
+            $message .= PHP_EOL . PHP_EOL;
         }
 
-        return (string) $e;
+        return $message;
     }
 }
