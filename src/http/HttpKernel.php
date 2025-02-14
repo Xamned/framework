@@ -60,8 +60,6 @@ class HttpKernel implements HttpKernelInterface
             }
 
             $response->getBody()->write($this->errorHandler->handle($e));
-        } finally {
-            $response = $response->withHeader('Content-Type', $request->getHeader('Content-Type'));
         }
 
         return $response;
