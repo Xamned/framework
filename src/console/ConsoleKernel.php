@@ -29,6 +29,7 @@ class ConsoleKernel implements ConsoleKernelInterface
         private readonly ErrorHandlerInterface $errorHandler,
         private readonly string $appName,
         private readonly string $version,
+        private readonly string $projectRoot,
     )
     {
         $this->initDefaultCommands();
@@ -100,7 +101,13 @@ class ConsoleKernel implements ConsoleKernelInterface
                 continue;
             }
 
-            $commandClass = str_replace(PROJECT_ROOT, '', $commandNameSpace) . DIRECTORY_SEPARATOR .   $matches[0];
+            $commandClass = str_replace($this->projectRoot, '', $commandNameSpace) . DIRECTORY_SEPARATOR .   $matches[0];
+
+            $psr = json_decode(file_get_contents("{$this->projectRoot}composer.json"), true)['autoload']['psr-4'] ?? [];
+
+            if ($psr !== []) {
+                $commandClass = str_replace(current($psr), key($psr), $commandClass);
+            }
 
             $commandClass = str_replace('/', '\\', $commandClass);
             
@@ -137,15 +144,13 @@ class ConsoleKernel implements ConsoleKernelInterface
             	->execute();
             	
         } catch (Throwable $e) {
-            $this->errorHandler->handle($e);
-
-            $message = $e->getMessage();
+            $message = $this->errorHandler->handle($e);
 
             $this->output->stdErr($message);
 
             $this->logger->error([
                 'category' => $this::class,
-                'message' => $message,
+                'message' => $e->getMessage(),
             ]);
 
             return 1;
