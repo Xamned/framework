@@ -144,15 +144,13 @@ class ConsoleKernel implements ConsoleKernelInterface
             	->execute();
             	
         } catch (Throwable $e) {
-            $this->errorHandler->handle($e);
-
-            $message = $e->getMessage();
+            $message = $this->errorHandler->handle($e);
 
             $this->output->stdErr($message);
 
             $this->logger->error([
                 'category' => $this::class,
-                'message' => $message,
+                'message' => $e->getMessage(),
             ]);
 
             return 1;

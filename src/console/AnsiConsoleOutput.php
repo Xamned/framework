@@ -13,6 +13,7 @@ class AnsiConsoleOutput implements ConsoleOutputInterface
 {    
     public function __construct(
     	private readonly ContainerInterface $container,
+        private readonly AnsiLineFormater $lineFormater,
         private $stdOut = STDOUT,
         private $stdErr = STDERR,
     ) {}
@@ -26,9 +27,7 @@ class AnsiConsoleOutput implements ConsoleOutputInterface
      */
     private function createAnsiLine(string $message, array $format = []): string
     {
-        $code = implode(';', $format);
-
-        return "\033[0m" . ($code !== '' ? "\033[" . $code . 'm' : '') . $message . "\033[0m";
+        return $this->lineFormater->format($message, $format);
     }
 
     public function stdout(string $message): void
