@@ -183,30 +183,60 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
      * "/path?{firstNumber}{?secondNumber=900}"
      * "/path?firstNumber=700"
      * 
-     * @param  array $queryParams параметры из запроса
-     * @param  array $params подготовленные параметры определенных для запроса
+     * @param  ServerRequestInterface $request объект запроса
+     * @param  Route $route объект маршрута
      * @return array
      * Пример:
      * [700, 900]
      * @throws InvalidArgumentException если в строке запроса не передан параметр объявленный как обязательный
      */
-    private function mapParams(array $queryParams, array $params): array
+    private function mapParams(ServerRequestInterface $request, Route $route): array
     {
         $result = [];
 
-        foreach ($params as $param) {
+        $queryParams = $request->getQueryParams();
+
+        $pathParams = $this->mapPathParams($request, $route);
+
+        foreach ($route->params as $param) {
             $name = $param['name'];
 
-            if ($param['required'] === true && isset($queryParams[$name]) === false) {
-                throw new InvalidArgumentException('В строке запроса не передан параметр объявленный как обязательный');
+            if (isset($pathParams[$name]) === true) {
+                $result[] = $pathParams[$name];
+                continue;
             }
 
-            $result[] = isset($queryParams[$name]) === true
-                ? $queryParams[$name]
-                : $param['default'];
+            if (isset($queryParams[$name]) === true) {
+                $result[] = $queryParams[$name];
+                continue;
+            }
+
+            if ($param['required'] === false) {
+                $result[] = $param['default'];
+                continue;
+            }
+
+            throw new InvalidArgumentException('В строке запроса не передан параметр объявленный как обязательный');
         }
 
         return $result;
+    }
+
+    private function mapPathParams(ServerRequestInterface $request, Route $route): array
+    {
+        $path = $request->getUri()->getPath();
+        $pathParams = $route->getPathParams();
+        $matches = [];
+
+        $pattern = $route->getPathRegexPattern();
+        preg_match("/$pattern/", $path, $matches);
+        $matches = array_slice($matches, 1);
+
+        if (count($pathParams) !== count($matches)) {
+            throw new InvalidArgumentException('В строке запроса не передан параметр объявленный как обязательный');
+        }
+
+        return array_combine($pathParams, $matches);
     }
 
     /**
@@ -214,18 +244,9 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
      */
     public function dispatch(ServerRequestInterface $request): mixed
     {
-        $method = $request->getMethod();
+        $route = $this->findRoute($request->getMethod(), $request->getUri()->getPath());
 
-        $path = $request->getUri()->getPath();
-
-        if (isset($this->routes[$method][$path]) === false) {
-            throw new HttpNotFoundException();
-        }
-
-        /** @var Route */
-        $route = $this->routes[$method][$path];
-
-        $params = $this->mapParams($request->getQueryParams(), $route->params);
+        $params = $this->mapParams($request, $route);
 
         $response = $this->container->get(ResponseInterface::class);
 
@@ -238,6 +259,24 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         }
 
         return $this->container->call($route->handler, $route->action, $params);
+    }
+
+    private function findRoute(string $method, string $path): Route
+    {
+        if (isset($this->routes[$method][$path]) === true) {
+            return $this->routes[$method][$path];
+        }
+
+        /** @var Route $route */
+        foreach ($this->routes[$method] as $route) {
+            $pattern = $route->getPathRegexPattern();
+
+            if ((bool) preg_match("/$pattern/", $path) === true) {
+                return $route;
+            }
+        }
+        
+        throw new HttpNotFoundException();
     }
 
     private function applyMiddlewares(array $middlewares, ServerRequestInterface $request, ResponseInterface $response): void
