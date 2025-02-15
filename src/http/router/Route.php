@@ -29,4 +29,16 @@ class Route implements MiddlewareAssignable
 
         return array_merge($this->parent->getMiddlewares(), $this->middlewares);
     }
+
+    public function getPathRegexPattern(): string
+    {
+        return addcslashes(preg_replace('/{.+?}/', '(.+?)', $this->path), '/');
+    }
+
+    public function getPathParams(): array
+    {
+        $matches = [];
+        preg_match_all('/{(.+?)}/',  $this->path, $matches);
+        return $matches[1];
+    }
 }
