@@ -1,6 +1,6 @@
 <?php
 
-namespace framework\http\factories;
+namespace xamned\framework\http\factories;
 
 use xamned\framework\http\ServerRequest;
 use xamned\framework\contracts\container\ContainerInterface;
