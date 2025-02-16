@@ -1,6 +1,6 @@
 <?php
 
-namespace framework\http;
+namespace xamned\framework\http;
 
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
