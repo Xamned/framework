@@ -24,7 +24,7 @@ final readonly class ServerRequestFactory implements ServerRequestFactoryInterfa
 
     public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface 
     {
-        if ($method === 'POST') {
+        if (empty($_POST) === false) {
             /** @var StreamInterface */
             $body = $this->streamFactory->createStreamFromResource(fopen('php://input', 'r'));
             $parsedBody = $this->getParsedBody($serverParams, $body);
