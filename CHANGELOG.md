@@ -6,6 +6,13 @@
 Формат основан на [стандарте формата CHANGELOG](https://keepachangelog.com/en/1.0.0/),
 и придерживается [правил версионирования](https://semver.org/spec/v2.0.0.html).
 
+## [ [1.2.0](https://github.com/Xamned/framework/releases/tag/1.2.0) ] - 16.02.2025
+
+- Реализовано:
+    - Мидлвеер аутентификации запроса по заголовку X-API-KEY
+- Изменено:
+    - Фабрика по созданию серверного запроса
+
 ## [ [1.1.0](https://github.com/Xamned/framework/releases/tag/1.1.0) ] - 15.02.2025
 
 - Реализовано:

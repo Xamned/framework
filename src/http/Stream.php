@@ -1,6 +1,6 @@
 <?php
 
-namespace xamned\framework\http;
+namespace framework\http;
 
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
@@ -20,7 +20,7 @@ class Stream implements StreamInterface
     {
         try {
             $this->rewind();
-            return stream_get_contents($this->resource) ?? '';
+            return $this->getContents();
         } catch (RuntimeException $e) {
             return '';
         }
@@ -43,7 +43,7 @@ class Stream implements StreamInterface
 
     public function getSize(): ?int
     {
-        return filesize($this->resource) ?? null;
+        return filesize($this->getMetadata('uri')) ?? null;
     }
 
     public function tell(): int
@@ -93,7 +93,7 @@ class Stream implements StreamInterface
 
     public function getContents(): string
     {
-        return fpassthru($this->resource);
+        return stream_get_contents($this->resource) ?? '';
     }
 
     public function getMetadata(?string $key = null)
