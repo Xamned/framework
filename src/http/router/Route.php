@@ -32,7 +32,7 @@ class Route implements MiddlewareAssignable
 
     public function getPathRegexPattern(): string
     {
-        return addcslashes(preg_replace('/{.+?}/', '(.+?)', $this->path), '/');
+        return addcslashes(preg_replace('/{.+?}/', '(.+)', $this->path), '/');
     }
 
     public function getPathParams(): array
