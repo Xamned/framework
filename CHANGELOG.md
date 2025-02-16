@@ -6,6 +6,11 @@
 Формат основан на [стандарте формата CHANGELOG](https://keepachangelog.com/en/1.0.0/),
 и придерживается [правил версионирования](https://semver.org/spec/v2.0.0.html).
 
+## [ [1.2.1](https://github.com/Xamned/framework/releases/tag/1.2.1) ] - 16.02.2025
+
+- Исправлено:
+    - Ядро обработки http-запросов выставляет код статуса ответа в зависимости от метода запроса
+
 ## [ [1.2.0](https://github.com/Xamned/framework/releases/tag/1.2.0) ] - 16.02.2025
 
 - Реализовано:

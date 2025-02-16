@@ -40,6 +40,8 @@ class HttpKernel implements HttpKernelInterface
             }
 
             $response->getBody()->write($result);
+
+            $response = $response->withStatus($this->getStatus($request->getMethod()));
         } catch (HttpException $e) {
             $response = $this->response->withStatus($e->getCode());
             $this->eventDispatcher->trigger('log.context.attach', new Message('APP'));
@@ -63,5 +65,17 @@ class HttpKernel implements HttpKernelInterface
         }
 
         return $response;
+    }
+
+    private function getStatus(string $method)
+    {
+        $method = strtoupper($method);
+        return match($method) {
+            'GET' => 200,
+            'POST' => 201,
+            'PUT' => 200,
+            'PATCH' => 200,
+            'DELETE' => 204,
+        };
     }
 }
