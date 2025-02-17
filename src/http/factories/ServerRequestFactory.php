@@ -172,7 +172,7 @@ final readonly class ServerRequestFactory implements ServerRequestFactoryInterfa
             return [];
         }
 
-        if (preg_match('/(application\/x-www-form-urlencoded)||(multipart\/form-data)/', $serverParams['CONTENT_TYPE']) === 1) {
+        if (preg_match('/(application\/x-www-form-urlencoded|multipart\/form-data)/', $serverParams['CONTENT_TYPE']) === 1) {
             return $_POST;
         }
 
