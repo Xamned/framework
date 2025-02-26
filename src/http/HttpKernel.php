@@ -23,11 +23,6 @@ class HttpKernel implements HttpKernelInterface
         private readonly EventDispatcherInterface $eventDispatcher
     ) { }
 
-    /**
-     * Обработка входящего запроса
-     *
-     * @return ResponseInterface объект ответа
-     */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $response = $this->response;
