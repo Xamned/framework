@@ -6,6 +6,19 @@
 Формат основан на [стандарте формата CHANGELOG](https://keepachangelog.com/en/1.0.0/),
 и придерживается [правил версионирования](https://semver.org/spec/v2.0.0.html).
 
+- Реализовано:
+    - Валидация типов данных введенных параметров на уровне HTTPRouterInterface
+    - Класс ресурса (Resource)
+    - Контракт фабрики валидаторов (ValidatorFactoryInterface) и его реализация (ValidatorFactory)
+    - Контракт валидатора (ValidatorInterface)
+    - Абстрактный класс валидатора (AbstractValidator)
+    - Валидатор булевых значений (BooleanValidator)
+    - Валидатор чисел с плавающей точкой (FloatValidator)
+    - Валидатор целых чисел (IntegerValidator)
+    - Валидатор строковых значений (StringValidator)
+- Изменено:
+    - Добавлен метод регистрации ресурса в контракт HTTPRouterInterface (изменен Router в соответствии с контрактом)
+
 ## [ [1.3.0](https://github.com/Xamned/framework/releases/tag/1.3.0) ] - 26.02.2025
 
 - Реализовано:
