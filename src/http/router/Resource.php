@@ -15,7 +15,7 @@ class Resource
         ],
         'view' => [
             'method' => 'GET',
-            'path' => "{/{:id|integer}",
+            'path' => "/{:id|integer}",
             'action' => 'actionView',
             'middleware' => [],
         ],
@@ -27,19 +27,19 @@ class Resource
         ],
         'put' => [
             'method' => 'PUT',
-            'path' => "{/{:id|integer}",
+            'path' => "/{:id|integer}",
             'action' => 'actionUpdate',
             'middleware' => [],
         ],
         'patch' => [
             'method' => 'PATCH',
-            'path' => "{/{:id|integer}",
+            'path' => "/{:id|integer}",
             'action' => 'actionPatch',
             'middleware' => [],
         ],
         'delete' => [
             'method' => 'DELETE',
-            'path' => "{/{:id|integer}",
+            'path' => "/{:id|integer}",
             'action' => 'actionDelete',
             'middleware' => [],
         ],
@@ -60,7 +60,7 @@ class Resource
         foreach ($this->config as $route) {
             $router->add(
                 $route['method'], 
-                "{$this->name}{$route['path']}", 
+                "/{$this->name}{$route['path']}", 
                 "{$this->controller}::{$route['action']}"
             )->addMiddlewares($route['middleware']);            
         }
