@@ -38,7 +38,7 @@ class Route implements MiddlewareAssignable
     public function getPathParams(): array
     {
         $matches = [];
-        preg_match_all('/{(.+?)}/',  $this->path, $matches);
+        preg_match_all('/{\??:?(.+?)[}|]/',  $this->path, $matches);
         return $matches[1];
     }
 }
