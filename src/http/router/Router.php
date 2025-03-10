@@ -169,9 +169,9 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
             $routeGroupPath .= implode('/', array_keys($this->routeGroups)) . '/';
         }
 
-        preg_match("/(?<=\/).*?(?=\?)/", $route, $path);
+        preg_match('/\/([^?]+)/', $route, $matches);
 
-        $path = $routeGroupPath . $path[0];
+        $path = "$routeGroupPath{$matches[1]}";
 
         [$handler, $action] = $this->resolveHandler($handler);
 
