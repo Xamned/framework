@@ -8,11 +8,12 @@ use xamned\framework\contracts\http\router\MiddlewareAssignable;
 use xamned\framework\contracts\http\router\MiddlewareInterface;
 use xamned\framework\http\router\traits\MiddlewareAssignableTrait;
 use xamned\framework\contracts\container\ContainerInterface;
-use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use xamned\framework\contracts\validators\ValidatorFactoryInterface;
-use xamned\framework\validators\exceptions\ValidationFailedException;
+use xamned\framework\contracts\validator\TypeCastServiceInterface;
+use xamned\framework\contracts\validator\ValidatorFactoryInterface;
+use xamned\framework\http\exceptions\HttpBadRequestException;
+use xamned\framework\validator\exceptions\ValidationException;
 
 class Router implements HTTPRouterInterface, MiddlewareAssignable
 {
@@ -25,6 +26,7 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly ValidatorFactoryInterface $validatorFactory,
+        private readonly TypeCastServiceInterface $typeCastService,
     ) {
     }
 
@@ -98,13 +100,13 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
      *         'name' => 'firstNumber',
      *         'required' => true,
      *         'default' => null,
-     *         'validators => [],
+     *         'rules => [],
      *     ],
      *     [
      *         'name' => 'secondNumber',
      *         'required' => false,
      *         'default' => 900,
-     *         'validators => ['integer', 'float'],
+     *         'rules => ['integer', 'float'],
      *     ],
      * ]
      */
@@ -120,7 +122,7 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
             $name = $matches[1];
 
             preg_match_all('/\|([^|=]+)/', $part, $matches);
-            $validators = $matches[1];
+            $rules = $matches[1];
 
             preg_match('/=(.+)/', $part, $matches);
             $default = $matches[1] ?? null;
@@ -129,7 +131,7 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
                 'name' => $name,
                 'required' => str_starts_with($part, '?') === false,
                 'default' => $default,
-                'validators' => $validators,
+                'rules' => $rules,
             ];
         }
 
@@ -171,7 +173,9 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
 
         preg_match('/\/([^?]+)/', $route, $matches);
 
-        $path = "$routeGroupPath{$matches[1]}";
+        $routePath = $matches[1] ?? '';
+
+        $path = $routeGroupPath . $routePath;
 
         [$handler, $action] = $this->resolveHandler($handler);
 
@@ -190,8 +194,6 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
     /**
      * Получение значений параметров запроса определенных для маршрута
      * 
-     * + Валидация параметров по примеру - {:id|integer}
-     * 
      * Пример:
      * "/path?{firstNumber}{?secondNumber=900}"
      * "/path?firstNumber=700"
@@ -201,7 +203,7 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
      * @return array
      * Пример:
      * [700, 900]
-     * @throws InvalidArgumentException если в строке запроса не передан параметр объявленный как обязательный
+     * @throws HttpBadRequestException если в строке запроса не передан параметр объявленный как обязательный
      */
     private function mapParams(ServerRequestInterface $request, Route $route): array
     {
@@ -217,11 +219,9 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
             $value = $pathParams[$name] ?? $queryParams[$name] ?? $param['default'];
 
             if ($value === null) {
-                throw new InvalidArgumentException('В строке запроса не передан параметр объявленный как обязательный');
+                throw new HttpBadRequestException('В строке запроса не передан параметр объявленный как обязательный');
             }
-
-            $this->validateParam($name, $value, $param['validators']);
-
+            
             $result[] = $value;
         }
 
@@ -239,32 +239,49 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         $matches = array_slice($matches, 1);
 
         if (count($pathParams) !== count($matches)) {
-            throw new InvalidArgumentException('В строке запроса не передан параметр объявленный как обязательный');
+            throw new HttpBadRequestException('В строке запроса не передан параметр объявленный как обязательный');
         }
 
         return array_combine($pathParams, $matches);
     }
 
-    private function validateParam(string $param, mixed $value, array $validators): void
+    private function validateParams(Route $route, array $params): array
     {
-        if ($validators === []) {
-            return;
-        }
+        $types = [];
 
-        $countFailed = 0;
-
-        foreach ($validators as $validator) {
-            try {
-                $this->validatorFactory->create($validator, ['attribute' => $param])->validate($value);
-            } catch (ValidationFailedException $e) {
-                $lastException = new ValidationFailedException($e->getMessage(), $e->getCode(), $lastException ?? null);
-                $countFailed++;
+        foreach ($route->params as $key => $param) {
+            if ($param['rules'] !== []) {
+                $types[] = $this->validateParam($param['name'], $params[$key], $param['rules']);
+                continue;
             }
+
+            $types[] = '';
         }
 
-        if ($countFailed === count($validators)) {
-            throw $lastException;
+        return $types;
+    }
+
+    private function validateParam(string $param, mixed $value, array $rules): string
+    {
+        $validator = $this->validatorFactory->create($rules);
+
+        $validator->validate($value);
+
+        if ($validator->hasErrors() === false) {
+            return $validator->getPassedRules()[0];
         }
+
+        $errors = $validator->getErrors();
+
+        if (count($errors) === count($rules)) {
+            $messages = array_map(fn(ValidationException $e): string => $e->getMessage(), $errors);
+
+            $message = implode(', ', $messages);
+
+            throw new HttpBadRequestException("Значение \"$param\" не является $message.");
+        }
+
+        return $validator->getPassedRules()[0];
     }
 
     /**
@@ -275,6 +292,12 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         $route = $this->findRoute($request->getMethod(), $request->getUri()->getPath());
 
         $params = $this->mapParams($request, $route);
+
+        $types = $this->validateParams($route, $params);
+
+        foreach ($types as $key => $type) {
+            $params[$key] = $this->typeCastService->cast($params[$key], $type);
+        }
 
         $response = $this->container->get(ResponseInterface::class);
 
