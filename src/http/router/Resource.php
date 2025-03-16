@@ -50,8 +50,10 @@ class Resource
         protected string $controller,
         array $config = [],
     ) {
-        if ($config !== []) {
-            $this->config = $config;
+        foreach ($config as $action => $settings) {
+            foreach ($settings as $key => $value) {
+                $this->config[$action][$key] = $value;
+            }
         }
     }
 
