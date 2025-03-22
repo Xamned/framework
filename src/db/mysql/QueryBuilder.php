@@ -79,7 +79,7 @@ class QueryBuilder implements MysqlQueryBuilderInterface
                 continue;
             }
 
-            $this->bindings[":$key"] = $value;
+            $this->bindParam($key, $value);
 
             $this->blocks['where'][] = "$key = :$key";
         }
@@ -89,11 +89,27 @@ class QueryBuilder implements MysqlQueryBuilderInterface
 
     public function whereIn(string $column, array $values): static
     {
-        $values = implode(', ', $values);
+        $list = [];
 
-        $this->blocks['where'][] = "$column IN($values)";
+        foreach ($values as $key => $value) {
+            $this->bindParam("in$column$key", $value);
+            $list[] = ":in$column$key";
+        }
+
+        $list = implode(', ', $list);
+
+        $this->blocks['where'][] = "$column IN($list)";
 
         return $this;
+    }
+
+    private function bindParam(string $bind, mixed $value): void
+    {
+        if (is_string($value) === true) {
+            $value = "'$value'";
+        }
+
+        $this->bindings[":$bind"] = $value;
     }
 
     public function join(string $type, string|array $resource, string $on): static
