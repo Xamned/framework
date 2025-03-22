@@ -271,12 +271,8 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
             return $validator->getPassedRules()[0];
         }
 
-        $errors = $validator->getErrors();
-
-        if (count($errors) === count($rules)) {
-            $messages = array_map(fn(ValidationException $e): string => $e->getMessage(), $errors);
-
-            $message = implode(', ', $messages);
+        if (count($validator->getErrors()) === count($rules)) {
+            $message = $validator->getErrorsMessage();
 
             throw new HttpBadRequestException("Значение \"$param\" не является $message.");
         }
