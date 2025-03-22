@@ -17,4 +17,6 @@ interface FormRequestInterface
     function setSkipEmptyValues(): void;
 
     function getValues(): array;
+
+    function load(array $data): void;
 }

@@ -1,7 +1,8 @@
 <?php
 
-namespace xamned\framework\http;
+namespace xamned\framework\http\factories;
 
+use Psr\Http\Message\ServerRequestInterface;
 use xamned\framework\contracts\container\ContainerInterface;
 use xamned\framework\contracts\http\FormRequestFactoryInterface;
 use xamned\framework\contracts\http\FormRequestInterface;
@@ -10,6 +11,7 @@ class FormRequestFactory implements FormRequestFactoryInterface
 {
     public function __construct(
         private readonly ContainerInterface $container,
+        private readonly ServerRequestInterface $request,
     ) {
     }
 
@@ -19,6 +21,10 @@ class FormRequestFactory implements FormRequestFactoryInterface
             throw new \InvalidArgumentException("$formClassName не соответствует интерфейсу - " . FormRequestInterface::class);
         }
 
-        return $this->container->get($formClassName);
+        $form = $this->container->get($formClassName);
+
+        $form->load($this->request->getParsedBody());
+
+        return $form;
     }
 }

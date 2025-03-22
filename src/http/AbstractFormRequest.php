@@ -133,4 +133,11 @@ abstract class AbstractFormRequest implements FormRequestInterface
 
         return $attributes;
     }
+
+    public function load(array $data): void
+    {
+        foreach($this->getAttributes() as $attribute) {
+            $this->$attribute = $data[$attribute] ?? null;
+        }
+    }
 }
