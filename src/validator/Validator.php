@@ -47,4 +47,11 @@ class Validator implements ValidatorInterface
     {
         return $this->passedRules;
     }
+
+    public function getErrorsMessage(): string
+    {
+        $messages = array_map(fn(ValidationException $e): string => $e->getMessage(), $this->errors);
+
+        return implode(', ', $messages);
+    }
 }
