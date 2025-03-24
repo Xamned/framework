@@ -5,7 +5,7 @@ namespace xamned\framework\http\resource;
 use xamned\framework\contracts\db\DataBaseConnectionInterface;
 use xamned\framework\contracts\http\resource\ResourceWriterInterface;
 
-class ResourceWriter implements ResourceWriterInterface
+class DatabaseResourceWriter implements ResourceWriterInterface
 {
     private string $resourceName;
 
