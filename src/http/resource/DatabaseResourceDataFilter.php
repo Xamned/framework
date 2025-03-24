@@ -2,11 +2,12 @@
 
 namespace xamned\framework\http\resource;
 
+use InvalidArgumentException;
 use xamned\framework\contracts\db\DataBaseConnectionInterface;
 use xamned\framework\contracts\db\QueryBuilderInterface;
 use xamned\framework\contracts\http\resource\ResourceDataFilterInterface;
 
-class ResourceDataFilter implements ResourceDataFilterInterface
+class DatabaseResourceDataFilter implements ResourceDataFilterInterface
 {
     private string $resourceName;
     private array $accessibleFields = [];
@@ -42,7 +43,9 @@ class ResourceDataFilter implements ResourceDataFilterInterface
      */
     function filterAll(array $condition): array
     {
-        // TODO: Implement filterAll() method.
+        return $this->dbConnection->select(
+            $this->buildQuery($condition)
+        );
     }
 
     /**
@@ -50,6 +53,26 @@ class ResourceDataFilter implements ResourceDataFilterInterface
      */
     function filterOne(array $condition): array
     {
-        // TODO: Implement filterOne() method.
+        return $this->dbConnection->selectOne(
+            $this->buildQuery($condition)
+        );
+    }
+
+    private function buildQuery(array $condition): QueryBuilderInterface
+    {
+        $query = $this->queryBuilder
+            ->select([$condition['fields']])
+            ->from($this->resourceName);
+
+        foreach ($condition['filter'] as $field => $fieldCondition) {
+            if (
+                in_array($field, $this->accessibleFields) === true
+                && in_array('$eq', $this->accessibleFilters) === true
+            ) {
+                $query->where([$field => $fieldCondition['$eq']]);
+            }
+        }
+
+        return $query;
     }
 }
