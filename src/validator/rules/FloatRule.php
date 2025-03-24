@@ -9,7 +9,7 @@ class FloatRule implements ValidationRuleInterface
 {
     public function __construct(
         public readonly string $name = 'float',
-        protected string $message = 'числом c плавающей точкой'
+        protected string $caseLine = 'числом c плавающей точкой'
     ) {
     }
 
@@ -25,7 +25,7 @@ class FloatRule implements ValidationRuleInterface
         }
 
         if (is_numeric($value) === false) {
-            throw new ValidationException($this->message);
+            throw new ValidationException($this->caseLine);
         }
     }
 }

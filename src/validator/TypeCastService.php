@@ -18,8 +18,8 @@ class TypeCastService implements TypeCastServiceInterface
             'string' => (string) $value,
             'boolean' => (bool) $value,
             'bool' => (bool) $value,
-            'array' => (array) $value,
-            'object' => (object) $value,
+            'json_object' => json_decode($value),
+            'json_array' => json_decode($value, true),
             default => $value,
         };
     }

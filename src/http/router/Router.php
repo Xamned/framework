@@ -272,9 +272,9 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         }
 
         if (count($validator->getErrors()) === count($rules)) {
-            $message = $validator->getErrorsMessage();
+            $caseLine = $validator->getErrorsCasesLine();
 
-            throw new HttpBadRequestException("Значение \"$param\" не является $message.");
+            throw new HttpBadRequestException("Значение \"$param\" не является $caseLine.");
         }
 
         return $validator->getPassedRules()[0];

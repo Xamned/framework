@@ -9,7 +9,7 @@ class BooleanRule implements ValidationRuleInterface
 {
     public function __construct(
         public readonly string $name = 'boolean',
-        protected string $message = 'булевым значением',
+        protected string $caseLine = 'булевым значением',
     ) {
     }
 
@@ -21,7 +21,7 @@ class BooleanRule implements ValidationRuleInterface
     public function execute(mixed $value): void
     {
         if (is_bool($value) === false || $this->isBoolExpression($value) === false) {
-            throw new ValidationException($this->message);
+            throw new ValidationException($this->caseLine);
         } 
     }
 
