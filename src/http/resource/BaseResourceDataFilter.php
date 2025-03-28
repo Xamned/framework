@@ -7,17 +7,22 @@ use xamned\framework\contracts\db\DataBaseConnectionInterface;
 use xamned\framework\contracts\db\QueryBuilderInterface;
 use xamned\framework\contracts\http\resource\ResourceDataFilterInterface;
 
-class ResourceDataFilter implements ResourceDataFilterInterface
+abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
 {
     private string $resourceName;
+    private readonly DataBaseConnectionInterface $dbConnection;
+    private readonly QueryBuilderInterface $queryBuilder;
     private array $accessibleFields = [];
     private array $accessibleFilters = [];
 
-    public function __construct(
-        private readonly DataBaseConnectionInterface $dbConnection,
-        private readonly QueryBuilderInterface $queryBuilder,
-    ) {
+    protected function setDbConnection(DataBaseConnectionInterface $dbConnection): void
+    {
+        $this->dbConnection = $dbConnection;
+    }
 
+    protected function setQueryBuilder(QueryBuilderInterface $queryBuilder): void
+    {
+        $this->queryBuilder = $queryBuilder;
     }
 
     public function setResourceName(string $name): static

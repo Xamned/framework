@@ -5,13 +5,15 @@ namespace xamned\framework\http\resource;
 use xamned\framework\contracts\db\DataBaseConnectionInterface;
 use xamned\framework\contracts\http\resource\ResourceWriterInterface;
 
-class ResourceWriter implements ResourceWriterInterface
+abstract class BaseResourceWriter implements ResourceWriterInterface
 {
     private string $resourceName;
 
-    public function __construct(
-        private readonly DataBaseConnectionInterface $dbConnection,
-    ) {
+    private readonly DataBaseConnectionInterface $dbConnection;
+
+    protected function setDbConnection(DataBaseConnectionInterface $dbConnection): void
+    {
+        $this->dbConnection = $dbConnection;
     }
 
     public function setResourceName(string $name): static
