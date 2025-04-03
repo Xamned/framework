@@ -2,21 +2,7 @@
 
 namespace xamned\framework\http\resource\responses;
 
-class UpdateResponse extends JsonResponse
+class UpdateResponse
 {
-    public function __construct(
-        string $protocolVersion, 
-        array $headers, 
-        \Psr\Http\Message\StreamInterface $body, 
-        int $statusCode = 200, 
-        string $reasonPhrase = 'OK'
-    ) {
-        parent::__construct(
-            $protocolVersion, 
-            $headers, 
-            $body, 
-            $statusCode, 
-            $reasonPhrase
-        );
-    }
+    // ...
 }

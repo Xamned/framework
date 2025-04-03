@@ -106,15 +106,10 @@ abstract class AbstractResourceController
     public function actionList(): JsonResponse
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::INDEX);
-
-        /** @var JsonResponse */
-        $response = $this->container->get(JsonResponse::class);
-
+        
         $data = $this->resourceDataFilter->filterAll($this->request->getQueryParams());
 
-        $response->getBody()->write(json_encode($data));
-        
-        return $response;
+        return new JsonResponse($data);
     }
 
     /**
@@ -134,14 +129,9 @@ abstract class AbstractResourceController
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::VIEW);
 
-        /** @var JsonResponse */
-        $response = $this->container->get(JsonResponse::class);
-
         $data = $this->resourceDataFilter->filterOne($this->request->getQueryParams());
 
-        $response->getBody()->write(json_encode($data));
-        
-        return $response;
+        return new JsonResponse($data);
     }
 
     public function actionCreate(): CreateResponse
@@ -158,7 +148,8 @@ abstract class AbstractResourceController
 
         $this->resourceWriter->create($form->getValues());
 
-        return $this->container->get(CreateResponse::class);
+        return new CreateResponse();
+
     }
 
     public function actionUpdate(string|int $id): UpdateResponse
@@ -175,7 +166,7 @@ abstract class AbstractResourceController
 
         $this->resourceWriter->update($id, $form->getValues());
 
-        return $this->container->get(UpdateResponse::class);
+        return new UpdateResponse();
     }
 
     public function actionPatch(string|int $id): PatchResponse
@@ -194,7 +185,7 @@ abstract class AbstractResourceController
 
         $this->resourceWriter->patch($id, $form->getValues());
 
-        return $this->container->get(PatchResponse::class);
+        return new PatchResponse();
     }
 
     public function actionDelete(string|int $id): DeleteResponse
@@ -203,6 +194,6 @@ abstract class AbstractResourceController
         
         $this->resourceWriter->delete($id);
         
-        return $this->container->get(DeleteResponse::class);
+        return new DeleteResponse();
     }
 }
