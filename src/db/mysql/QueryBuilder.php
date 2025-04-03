@@ -78,11 +78,17 @@ class QueryBuilder implements MysqlQueryBuilderInterface
     public function where(array $condition): static
     {
         foreach ($condition as $key => $value) {
-            match (true) {
-                is_int($key) => $this->whereOperator(...$value),
-                is_array($value) => $this->whereIn($key, $value),
-                true => $this->whereOperator('=', $key, $value)
-            };
+            if (is_int($key) === true) {
+                $this->whereOperator(...$value);
+                continue;
+            }
+
+            if (is_array($value) === true) {
+                $this->whereIn($key, $value);
+                continue;
+            }
+
+            $this->whereOperator('=', $key, $value);
         }
 
         return $this;
@@ -92,11 +98,15 @@ class QueryBuilder implements MysqlQueryBuilderInterface
     {
         $operator = strtolower($operator);
 
-        return match (true) {
-            $operator === 'in' => $this->whereIn($column, $value),
-            ComparisonOperator::tryFrom($operator) !== null => $this->whereComparison($operator, $column, $value),
-            true => throw new InvalidArgumentException("Оператор \"$operator\" не поддерживается")
-        };
+        if ($operator === 'in') {
+            return $this->whereIn($column, $value);
+        }
+
+        if (ComparisonOperator::tryFrom($operator) !== null) {
+            return $this->whereComparison($operator, $column, $value);
+        }
+
+        throw new InvalidArgumentException("Оператор \"$operator\" не поддерживается");
     }
 
     protected function whereComparison(string $operator, string $column, mixed $value): static
