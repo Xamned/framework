@@ -1,9 +1,9 @@
 <?php
 
-namespace xamned\framework\http;
+namespace xamned\framework\form;
 
-use xamned\framework\contracts\http\FormRequestInterface;
-use xamned\framework\contracts\validator\TypeCastServiceInterface;
+use xamned\framework\contracts\form\FormRequestInterface;
+use xamned\framework\contracts\validator\TypeCastTranslatorInterface;
 use xamned\framework\contracts\validator\ValidatorFactoryInterface;
 use xamned\framework\validator\exceptions\ValidationException;
 
@@ -15,9 +15,8 @@ abstract class AbstractFormRequest implements FormRequestInterface
 
     public function __construct(
         private readonly ValidatorFactoryInterface $validatorFactory,
-        private readonly TypeCastServiceInterface $typeCastService,
-    ) {
-    }
+        private readonly TypeCastTranslatorInterface $typeCastService,
+    ) {}
     
     /**
      * Возврат правил валидации формы
@@ -80,7 +79,7 @@ abstract class AbstractFormRequest implements FormRequestInterface
             return;
         }
 
-        $this->$attribute = $this->typeCastService->cast($this->$attribute, $validator->getPassedRules()[0]);
+        $this->$attribute = $this->typeCastService->translate($this->$attribute, $validator->getPassedRules()[0]);
     }
 
     public function addError(string $attribute, string $message): void

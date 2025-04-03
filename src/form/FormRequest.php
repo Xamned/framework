@@ -1,20 +1,12 @@
 <?php
 
-namespace xamned\framework\http;
+namespace xamned\framework\form;
 
 use InvalidArgumentException;
-use xamned\framework\contracts\validator\TypeCastServiceInterface;
-use xamned\framework\contracts\validator\ValidatorFactoryInterface;
 
 class FormRequest extends AbstractFormRequest
 {
     protected array $dynamicAttributes;
-
-    public function __construct(
-        private readonly ValidatorFactoryInterface $validatorFactory, 
-        private readonly TypeCastServiceInterface $typeCastService
-    ) {
-    }
 
     public function addAttribute(string $name, mixed $value = null): void
     {

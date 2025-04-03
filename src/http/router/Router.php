@@ -10,10 +10,9 @@ use xamned\framework\http\router\traits\MiddlewareAssignableTrait;
 use xamned\framework\contracts\container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use xamned\framework\contracts\validator\TypeCastServiceInterface;
+use xamned\framework\contracts\validator\TypeCastTranslatorInterface;
 use xamned\framework\contracts\validator\ValidatorFactoryInterface;
 use xamned\framework\http\exceptions\HttpBadRequestException;
-use xamned\framework\validator\exceptions\ValidationException;
 
 class Router implements HTTPRouterInterface, MiddlewareAssignable
 {
@@ -26,7 +25,7 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly ValidatorFactoryInterface $validatorFactory,
-        private readonly TypeCastServiceInterface $typeCastService,
+        private readonly TypeCastTranslatorInterface $typeCastService,
     ) {
     }
 
@@ -292,7 +291,7 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         $types = $this->validateParams($route, $params);
 
         foreach ($types as $key => $type) {
-            $params[$key] = $this->typeCastService->cast($params[$key], $type);
+            $params[$key] = $this->typeCastService->translate($params[$key], $type);
         }
 
         $response = $this->container->get(ResponseInterface::class);

@@ -1,6 +1,6 @@
 <?php
 
-namespace xamned\framework\contracts\http;
+namespace xamned\framework\contracts\form;
 
 interface FormRequestInterface
 {
