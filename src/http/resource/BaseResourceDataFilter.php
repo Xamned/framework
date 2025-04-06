@@ -70,11 +70,13 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     private function buildQuery(array $condition): QueryBuilderInterface
     {
         $query = $this->queryBuilder
-            ->select([$condition['fields']])
+            ->select($condition['fields'] ?? $this->accessibleFields)
             ->from($this->resourceName);
 
-        foreach ($condition['filter'] as $field => $fieldCondition) {
-            $query->where($this->mapCondition($field, $fieldCondition));
+        if (isset($condition['filter']) === true) {
+            foreach ($condition['filter'] as $field => $fieldCondition) {
+                $query->where($this->mapCondition($field, $fieldCondition));
+            }
         }
 
         return $query;
@@ -82,6 +84,10 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
 
     private function checkConditionFilter(array $condition): void
     {
+        if (isset($condition['filter']) === false) {
+            return;
+        }
+
         foreach ($condition['filter'] as $field => $fieldCondition) {
             if (in_array($field, $this->accessibleFields) === false) {
                 throw new InvalidArgumentException('Поле ' . $field . ' недоступно');
