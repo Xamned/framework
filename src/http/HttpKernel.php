@@ -12,6 +12,7 @@ use xamned\framework\event_dispatcher\Message;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
+use xamned\framework\http\resource\responses\JsonResponse;
 
 class HttpKernel implements HttpKernelInterface
 {
@@ -34,7 +35,13 @@ class HttpKernel implements HttpKernelInterface
                 $response = $response->withHeader('Content-Type', 'application/json');
             }
 
-            $response->getBody()->write($result);
+            if ($result instanceof JsonResponse === false) {
+                $response->getBody()->write($result);
+            }
+
+            if ($result instanceof JsonResponse === true) {
+                $response = $result;
+            }
 
             $response = $response->withStatus($this->getStatus($request->getMethod()));
         } catch (HttpException $e) {

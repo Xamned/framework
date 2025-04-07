@@ -10,7 +10,7 @@ class QueryBuilder implements MysqlQueryBuilderInterface
     const INNER_JOIN = 'INNER JOIN';
     const RIGHT_JOIN = 'RIGHT JOIN';
 
-    protected array $bindings;
+    protected array $bindings = [];
     protected array $blocks = [
         'select' => [],
         'from' => '',
@@ -46,7 +46,7 @@ class QueryBuilder implements MysqlQueryBuilderInterface
         };
     }
 
-    public function select(array|string ...$fields): static
+    public function select(array|string $fields): static
     {
         foreach ($fields as $field) {
             [$alias, $column] = $this->getNameWithAlias($field);
@@ -106,7 +106,7 @@ class QueryBuilder implements MysqlQueryBuilderInterface
     private function bindParam(string $bind, mixed $value): void
     {
         if (is_string($value) === true) {
-            $value = "'$value'";
+            $value = "$value";
         }
 
         $this->bindings[":$bind"] = $value;

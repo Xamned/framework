@@ -16,7 +16,7 @@ class QueryBuilder implements FileQueryBuilderInterface
         'offset' => null,
     ];
 
-    public function select(array|string ...$fields): static
+    public function select(array|string $fields): static
     {
         $this->blocks['select'] = $fields;
 

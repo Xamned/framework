@@ -60,12 +60,12 @@ interface ResourceDataFilterInterface
      *         ],
      *     ],
      * ]
-     * @return array
+     * @return array|null
      * Пример:
      * [
      *     "id" => 1,
      *     "name" => "Некоторое имя 1"
      * ],
      */
-    function filterOne(array $condition): array;
+    function filterOne(array $condition): ?array;
 }

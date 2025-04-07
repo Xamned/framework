@@ -28,8 +28,8 @@ abstract class AbstractResourceController
     ) {
         $this->resourceDataFilter
             ->setResourceName($this->getResourceName())
-            ->setAccessibleFields($this->getAccessibleFilters())
-            ->setAccessibleFilters($this->getAccessibleFields());
+            ->setAccessibleFields($this->getAccessibleFields())
+            ->setAccessibleFilters($this->getAccessibleFilters());
 
         $this->resourceWriter
             ->setResourceName($this->getResourceName());
