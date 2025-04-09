@@ -9,7 +9,7 @@ use xamned\framework\db\mysql\enums\LogicOperator;
 
 class QueryBuilder implements MysqlQueryBuilderInterface
 {
-    protected array $bindings;
+    protected array $bindings = [];
     protected array $blocks = [
         'select' => [],
         'from' => '',
@@ -156,7 +156,7 @@ class QueryBuilder implements MysqlQueryBuilderInterface
     private function bindParam(string $bind, mixed $value): string
     {
         if (is_string($value) === true) {
-            $value = "'$value'";
+            $value = "$value";
         }
 
         if (isset($this->bindings[":$bind"]) === true) {

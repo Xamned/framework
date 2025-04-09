@@ -29,7 +29,7 @@ class HttpKernel implements HttpKernelInterface
     {
         try {
             $result = $this->router->dispatch($request);
-            
+          
             $response = $this->createResponse($result, $this->getStatus($request));
         } catch (HttpException $e) {
             $response = $this->handleError($e);
