@@ -2,36 +2,40 @@
 
 namespace xamned\framework\db\file;
 
-class FileContent
+class JsonListBuilder extends AbstractListBuilder
 {
-    protected array $data = [];
     protected array $row = [];
 
-    public function __construct(
-        public readonly string $file, 
-        array $columns = []
-    ) {
-        $this->format(
-            json_decode(file_get_contents($this->file), true, flags:JSON_THROW_ON_ERROR),
-            $columns
-        );
-    }
-
-    public function getTableData(): array
+    public function encode(array $data): mixed
     {
-        return $this->data;
+        return json_encode(['data' => $data], JSON_UNESCAPED_UNICODE);
     }
 
-    private function format(array $data, array $columns = []): void
+    protected function decode(): array
+    {
+        return json_decode(file_get_contents($this->file), true, flags:JSON_THROW_ON_ERROR);
+    }
+
+    protected function build(array $data, array $columns = []): void
     {
         $count = count(array_keys($data));
 
-        match (true) {
-            $columns !== [] => $this->treesFormat($data, $columns),
-            isset($data['data']) === true && $count === 1 => $this->simpleFormat($data),
-            isset($data['data'], $data['columns']) === true && $count === 2 => $this->tableFormat($data),
-            true => throw new \InvalidArgumentException('Невозможно определить способ форматирования данных.')
-        };
+        if ($columns !== []) {
+            $this->fromNestedObject($data, $columns);
+            return;
+        }
+
+        if (isset($data['data']) === true && $count === 1) {
+            $this->fromRows($data);
+            return;
+        }
+
+        if (isset($data['data'], $data['columns']) === true && $count === 2) {
+            $this->fromColumnsAndRows($data);
+            return;
+        }
+
+        throw new \InvalidArgumentException('Невозможно определить способ форматирования данных.');
     }
 
     /**
@@ -47,7 +51,7 @@ class FileContent
      * @param array $data
      * @return void
      */
-    private function simpleFormat(array $data): void
+    private function fromRows(array $data): void
     {
         $this->data = $data['data'];
     }
@@ -66,7 +70,7 @@ class FileContent
      * @param array $data
      * @return void
      */
-    private function tableFormat(array $data): void
+    private function fromColumnsAndRows(array $data): void
     {
         foreach ($data['data'] as $row) {
             $this->data[] = array_combine($data['columns'], $row);
@@ -91,7 +95,7 @@ class FileContent
      * @param array $data
      * @return void
      */
-    private function treesFormat(array $data, array $columns, int $depth = 0): void
+    private function fromNestedObject(array $data, array $columns, int $depth = 0): void
     {
         $column = $columns[$depth];
         $values = array_keys($data);
@@ -100,7 +104,7 @@ class FileContent
             $this->row[$column] = $value;
 
             if ($depth < count($columns) - 2) {
-                $this->treesFormat($data[$value], $columns, $depth + 1);
+                $this->fromNestedObject($data[$value], $columns, $depth + 1);
                 continue;
             }
 

@@ -2,6 +2,7 @@
 
 namespace xamned\framework\validator;
 
+use xamned\framework\contracts\container\ContainerInterface;
 use xamned\framework\contracts\validator\ValidationRuleInterface;
 use xamned\framework\contracts\validator\ValidatorFactoryInterface;
 use xamned\framework\contracts\validator\ValidatorInterface;
@@ -22,9 +23,11 @@ class ValidatorFactory implements ValidatorFactoryInterface
 
     protected string $validator = Validator::class;
 
-    public function __construct(array $validators = []) 
-    {
-        $this->rules = array_merge($this->rules, $validators);
+    public function __construct(
+        private readonly ContainerInterface $container,
+        array $rules = []
+    ) {
+        $this->rules = array_merge($this->rules, $rules);
     }
 
     public function create(array $config): ValidatorInterface
@@ -39,9 +42,7 @@ class ValidatorFactory implements ValidatorFactoryInterface
             $rules[] = $this->createRule($ruleName);
         }
 
-        $validator = $this->validator;
-
-        return new $validator($rules);
+        return $this->container->build($this->validator, ['rules' => $rules]);
     }
 
     private function createRule(string $name): ValidationRuleInterface
@@ -49,13 +50,13 @@ class ValidatorFactory implements ValidatorFactoryInterface
         $ruleConfig = $this->rules[$name];
 
         if (is_array($ruleConfig) === false) {
-            return new $ruleConfig();
+            return $this->container->build($ruleConfig);
         }
 
         $ruleClass = $ruleConfig['className'];
         unset($ruleConfig['className']);
 
-        return new $ruleClass($ruleConfig);
+        return $this->container->build($ruleClass, $ruleConfig);
     }
 
     public function attachRule(string $name, array|string $ruleConfig): void
