@@ -11,4 +11,8 @@ interface ErrorHandlerInterface
      * @return string
      */
     public function handle(Throwable $e): string;
+
+    public function isCompatibleWith(string $type): bool;
+
+    public function setResponseFormat(string $responseFormat): void;
 }

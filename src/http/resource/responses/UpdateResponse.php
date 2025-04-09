@@ -2,7 +2,7 @@
 
 namespace xamned\framework\http\resource\responses;
 
-class UpdateResponse
+class UpdateResponse extends BaseResponse
 {
     // ...
 }

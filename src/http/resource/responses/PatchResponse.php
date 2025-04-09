@@ -2,7 +2,7 @@
 
 namespace xamned\framework\http\resource\responses;
 
-class PatchResponse
+class PatchResponse extends BaseResponse
 {
     // ...
 }

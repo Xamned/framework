@@ -45,17 +45,19 @@ class QueryBuilder implements MysqlQueryBuilderInterface
         };
     }
 
-    public function select(array|string ...$fields): static
+    public function select(array|string $fields): static
     {
-        foreach ($fields as $field) {
-            [$alias, $column] = $this->getNameWithAlias($field);
+        if (is_string($fields) === true) {
+            $fields = explode(',', $fields);
+        }
 
-            if ($alias !== null) {
-                $this->blocks['select'][] = "$column as $alias";
+        foreach ($fields as $alias => $field) {
+            if (is_string($alias) === true) {
+                $this->blocks['select'][] = "$field as $alias";
                 continue;
             }
 
-            $this->blocks['select'][] = $column;
+            $this->blocks['select'][] = $field;
         }
 
         return $this;

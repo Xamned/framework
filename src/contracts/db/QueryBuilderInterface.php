@@ -4,7 +4,7 @@ namespace xamned\framework\contracts\db;
 
 interface QueryBuilderInterface
 {
-    function select(array|string ...$fields): static;
+    function select(array|string $fields): static;
 
     function from(array|string $resource): static;
 

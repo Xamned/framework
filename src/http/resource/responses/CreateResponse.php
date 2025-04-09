@@ -2,7 +2,7 @@
 
 namespace xamned\framework\http\resource\responses;
 
-class CreateResponse
+class CreateResponse extends BaseResponse
 {
-    // ...
+    public int $code = 201;
 }

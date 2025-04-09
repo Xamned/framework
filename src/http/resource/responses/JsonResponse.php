@@ -2,7 +2,7 @@
 
 namespace xamned\framework\http\resource\responses;
 
-class JsonResponse
+readonly class JsonResponse
 {
-    public function __construct(array $data) {}
+    public function __construct(public array $data) {}
 }
