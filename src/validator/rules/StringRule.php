@@ -9,7 +9,7 @@ class StringRule implements ValidationRuleInterface
 {
     public function __construct(
         public readonly string $name = 'string',
-        protected string $message = 'строкой'
+        protected string $caseLine = 'строкой'
     ) {
     }
 
@@ -21,7 +21,7 @@ class StringRule implements ValidationRuleInterface
     public function execute(mixed $value): void
     {
         if (is_string($value) === false) {
-            throw new ValidationException($this->message);
+            throw new ValidationException($this->caseLine);
         } 
     }
 }

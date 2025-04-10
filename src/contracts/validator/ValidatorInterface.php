@@ -12,5 +12,5 @@ interface ValidatorInterface
 
     public function getPassedRules(): array;
 
-    public function getErrorsMessage(): string;
+    public function getErrorsCasesLine(): string;
 }

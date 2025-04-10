@@ -58,7 +58,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     /**
      * @inheritDoc
      */
-    public function filterOne(array $condition): array
+    public function filterOne(array $condition): ?array
     {
         $this->checkConditionFilter($condition);
 
@@ -113,6 +113,6 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
             };
         }
 
-        return $queryReadableConditions;
+        return reset($queryReadableConditions);
     }
 }

@@ -2,11 +2,11 @@
 
 namespace xamned\framework\validator;
 
-use xamned\framework\contracts\validator\TypeCastServiceInterface;
+use xamned\framework\contracts\validator\TypeCastTranslatorInterface;
 
-class TypeCastService implements TypeCastServiceInterface
+class TypeCastTranslator implements TypeCastTranslatorInterface
 {
-    public function cast(mixed $value, string $type): mixed
+    public function translate(mixed $value, string $type): mixed
     {
         return match ($type) {
             'integer' => (int) $value,
@@ -18,8 +18,8 @@ class TypeCastService implements TypeCastServiceInterface
             'string' => (string) $value,
             'boolean' => (bool) $value,
             'bool' => (bool) $value,
-            'array' => (array) $value,
-            'object' => (object) $value,
+            'json_object' => json_decode($value),
+            'json_array' => json_decode($value, true),
             default => $value,
         };
     }

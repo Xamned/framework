@@ -6,65 +6,79 @@ use InvalidArgumentException;
 use RuntimeException;
 use xamned\framework\contracts\db\DataBaseConnectionInterface;
 use xamned\framework\contracts\db\FileQueryBuilderInterface;
+use xamned\framework\contracts\db\ListBuilderFactoryInterface;
+use xamned\framework\contracts\db\ListBuilderInterface;
 use xamned\framework\contracts\db\QueryBuilderInterface;
+use xamned\framework\db\file\enums\FileTypeEnum;
+use xamned\framework\db\mysql\enums\ComparisonOperator;
 
 class Connection implements DataBaseConnectionInterface
 {
     protected array $folders;
     protected array $resourceColumns;
+    protected FileTypeEnum $fileType;
+    protected ListBuilderFactoryInterface $listBuilderFactory;
+
     protected int $lastInsertId;
 
     public function __construct(array $config) 
     {
         $this->folders = $config['folders'];
+        $this->resourceColumns = $config['resourceColumns'];
+        $this->fileType = $config['fileType'];
+        $this->listBuilderFactory = $config['listBuilderFactory'];
     }
 
     /** @param FileQueryBuilderInterface $query */
-    private function prepare(QueryBuilderInterface $query)
+    private function prepare(QueryBuilderInterface $query): array
     {
         $params = $query->getStatement();
 
-        $dataManager = $this->createDataManager($params->resource);
+        $dataFilter = $this->createDataFilter($params->resource);
 
         if (empty($params->whereClause) === false) {
-            $dataManager->filter($params->whereClause);
+            $dataFilter->filter($params->whereClause);
         }
 
         if (empty($params->orderByClause) === false) {
-            $dataManager->orderBy($params->orderByClause);
+            $dataFilter->orderBy($params->orderByClause);
         }
 
         if (empty($params->limit) === false) {
-            $dataManager->limit($params->limit);
+            $dataFilter->limit($params->limit);
         }
 
         if (empty($params->offset) === false) {
-            $dataManager->offset($params->offset);
+            $dataFilter->offset($params->offset);
         }
 
         if (empty($params->selectFields) === false) {
-            return $dataManager->select($params->selectFields);
+            return $dataFilter->select($params->selectFields);
         }
         
         throw new InvalidArgumentException("Запрос не может быть реализован без блока SELECT.");
     }
 
-    private function getFileContent(string $resource): FileContent
+    private function getListBuilder(string $resource): ListBuilderInterface
     {
         foreach ($this->folders as $folder) {
-            $file = "$folder/{$resource}.json";
+            $fileName = "$folder/{$resource}.{$this->fileType->value}";
 
-            if (file_exists($file) === true) {
-                return new FileContent($file, $this->resourceColumns[$resource] ?? []);
+            if (file_exists($fileName) === true) {
+                return $this->listBuilderFactory->create(
+                    $this->fileType, 
+                    $fileName, 
+                    $this->resourceColumns[$resource] ?? []
+                );
             }
         }
 
-        throw new InvalidArgumentException("Файла с именем {$resource}.json не существует");
+        throw new InvalidArgumentException("Файла с именем {$resource}.{$this->fileType->value} не существует");
     }
 
-    private function createDataManager(string $resource): TableDataManager
+    private function createDataFilter(string $resource): TableDataFilter
     {
-        return new TableDataManager($this->getFileContent($resource)->getTableData());
+        return new TableDataFilter($this->getListBuilder($resource)->getData());
     }
 
     /** @param FileQueryBuilderInterface $query */
@@ -95,8 +109,8 @@ class Connection implements DataBaseConnectionInterface
 
     public function update(string $resource, array $data, array $condition): int
     {
-        $fileContent = $this->getFileContent($resource);
-        $table = $fileContent->getTableData();
+        $listBuilder = $this->getListBuilder($resource);
+        $table = $listBuilder->getData();
         $count = 0;
 
         foreach ($table as &$row) {
@@ -112,8 +126,7 @@ class Connection implements DataBaseConnectionInterface
         }
         unset($row);
 
-        file_put_contents($fileContent->file, json_encode(['data' => $table], JSON_UNESCAPED_UNICODE)) 
-            ?: throw new RuntimeException('Не удалось обновить файл.');
+        $this->updateFile($listBuilder, $table);
 
         return $count;
     }
@@ -128,6 +141,10 @@ class Connection implements DataBaseConnectionInterface
                 throw new InvalidArgumentException("В таблице не существует колонки $column");
             }
 
+            if (is_int($column) === true && $this->compareByOperator($value, $row) === false) {
+                return false;
+            }
+
             if (is_array($value) === true && in_array($row[$column], $value) === false) {
                 return false;
             }
@@ -140,10 +157,20 @@ class Connection implements DataBaseConnectionInterface
         return true;
     }
 
+    private function compareByOperator(array $condition, array $row): bool
+    {
+        [$operator, $column, $value] = $condition;
+
+        $comparisonOperator = ComparisonOperator::tryFrom($operator) 
+            ?? throw new InvalidArgumentException("Оператор \"$operator\" не поддерживается");
+
+        return $comparisonOperator->compare($row[$column], $value);
+    }
+
     public function insert(string $resource, array $data): int
     {
-        $fileContent = $this->getFileContent($resource);
-        $table = $fileContent->getTableData();
+        $listBuilder = $this->getListBuilder($resource);
+        $table = $listBuilder->getData();
 
         foreach (array_keys($data) as $column) {
             if (isset(current($table)[$column]) === false) {
@@ -153,8 +180,7 @@ class Connection implements DataBaseConnectionInterface
 
         $table[] = $data;
 
-        file_put_contents($fileContent->file, json_encode(['data' => $table], JSON_UNESCAPED_UNICODE)) 
-            ?: throw new RuntimeException('Не удалось обновить файл.');
+        $this->updateFile($listBuilder, $table);
 
         $this->lastInsertId = array_key_last($table);
 
@@ -163,21 +189,26 @@ class Connection implements DataBaseConnectionInterface
 
     public function delete(string $resource, array $condition): int
     {
-        $fileContent = $this->getFileContent($resource);
-        $table = $fileContent->getTableData();
+        $listBuilder = $this->getListBuilder($resource);
+        $table = $listBuilder->getData();
 
-        $new = array_filter($table, function ($row) use ($condition) {
+        $updatedTable = array_filter($table, function ($row) use ($condition) {
             return $this->checkCondition($row, $condition) === false;
         });
 
-        file_put_contents($fileContent->file, json_encode(['data' => $new], JSON_UNESCAPED_UNICODE)) 
-            ?: throw new RuntimeException('Не удалось обновить файл.');
+        $this->updateFile($listBuilder, $updatedTable);
 
-        return count($table) - count($new);
+        return count($table) - count($updatedTable);
     }
 
     public function getLastInsertId(): string
     {
         return $this->lastInsertId;
+    }
+
+    private function updateFile(ListBuilderInterface $listBuilder, array $data): void
+    {
+        file_put_contents($listBuilder->getFileName(), $listBuilder->encode($data)) 
+            ?: throw new RuntimeException('Не удалось обновить файл.');
     }
 }

@@ -2,15 +2,14 @@
 
 namespace xamned\framework\db\mysql;
 
+use InvalidArgumentException;
 use xamned\framework\contracts\db\MysqlQueryBuilderInterface;
+use xamned\framework\db\mysql\enums\ComparisonOperator;
+use xamned\framework\db\mysql\enums\LogicOperator;
 
 class QueryBuilder implements MysqlQueryBuilderInterface
 {
-    const LEFT_JOIN = 'LEFT JOIN';
-    const INNER_JOIN = 'INNER JOIN';
-    const RIGHT_JOIN = 'RIGHT JOIN';
-
-    protected array $bindings;
+    protected array $bindings = [];
     protected array $blocks = [
         'select' => [],
         'from' => '',
@@ -46,17 +45,19 @@ class QueryBuilder implements MysqlQueryBuilderInterface
         };
     }
 
-    public function select(array|string ...$fields): static
+    public function select(array|string $fields): static
     {
-        foreach ($fields as $field) {
-            [$alias, $column] = $this->getNameWithAlias($field);
+        if (is_string($fields) === true) {
+            $fields = explode(',', $fields);
+        }
 
-            if ($alias !== '') {
-                $this->blocks['select'][] = "$column as $alias";
+        foreach ($fields as $alias => $field) {
+            if (is_string($alias) === true) {
+                $this->blocks['select'][] = "$field as $alias";
                 continue;
             }
 
-            $this->blocks['select'][] = $column;
+            $this->blocks['select'][] = $field;
         }
 
         return $this;
@@ -66,7 +67,12 @@ class QueryBuilder implements MysqlQueryBuilderInterface
     {
         [$alias, $resource] = $this->getNameWithAlias($resource);
 
-        $this->blocks['from'] = "$resource $alias";
+        if ($alias !== null) {
+            $this->blocks['from'] = "$resource $alias";
+            return $this;
+        }
+
+        $this->blocks['from'] = $resource;
 
         return $this;
     }
@@ -74,15 +80,59 @@ class QueryBuilder implements MysqlQueryBuilderInterface
     public function where(array $condition): static
     {
         foreach ($condition as $key => $value) {
+            if (is_int($key) === true) {
+                $this->whereOperator(...$value);
+                continue;
+            }
+
             if (is_array($value) === true) {
                 $this->whereIn($key, $value);
                 continue;
             }
 
-            $this->bindParam($key, $value);
-
-            $this->blocks['where'][] = "$key = :$key";
+            $this->whereOperator('=', $key, $value);
         }
+
+        return $this;
+    }
+
+    protected function whereOperator(string $operator, string $column, mixed $value): static
+    {
+        $operator = strtolower($operator);
+
+        if ($operator === 'in') {
+            return $this->whereIn($column, $value);
+        }
+
+        if (ComparisonOperator::tryFrom($operator) !== null) {
+            return $this->whereComparison($operator, $column, $value);
+        }
+
+        throw new InvalidArgumentException("Оператор \"$operator\" не поддерживается");
+    }
+
+    protected function whereComparison(string $operator, string $column, mixed $value): static
+    {
+        if ($value === null) {
+            return $this->whereNull($operator, $column);
+        }
+
+        $bind = $this->bindParam($column, $value);
+
+        $this->blocks['where'][] = "$column $operator :$bind";
+
+        return $this;
+    }
+
+    protected function whereNull(string $operator, string $column): static
+    {
+        $operator = match ($operator) {
+            '=' => 'IS NULL',
+            '!=' => 'IS NOT NULL',
+            default => throw new InvalidArgumentException("Оператор \"$operator\" не поддерживается c NULL")
+        };
+
+        $this->blocks['where'][] = "$column $operator";
 
         return $this;
     }
@@ -92,8 +142,8 @@ class QueryBuilder implements MysqlQueryBuilderInterface
         $list = [];
 
         foreach ($values as $key => $value) {
-            $this->bindParam("in$column$key", $value);
-            $list[] = ":in$column$key";
+            $bind = $this->bindParam("in$column$key", $value);
+            $list[] = ":$bind";
         }
 
         $list = implode(', ', $list);
@@ -103,22 +153,59 @@ class QueryBuilder implements MysqlQueryBuilderInterface
         return $this;
     }
 
-    private function bindParam(string $bind, mixed $value): void
+    private function bindParam(string $bind, mixed $value): string
     {
         if (is_string($value) === true) {
-            $value = "'$value'";
+            $value = "$value";
+        }
+
+        if (isset($this->bindings[":$bind"]) === true) {
+            $bind = $this->resolveBindName($bind);
         }
 
         $this->bindings[":$bind"] = $value;
+
+        return $bind;
+    }
+
+    private function resolveBindName(string $bind): string
+    {
+        $suffix = count($this->bindings);
+
+        while (isset($this->bindings[":$bind$suffix"]) === true) {
+            $suffix++;
+        }
+
+        return "$bind$suffix";
     }
 
     public function join(string $type, string|array $resource, string $on): static
     {
         [$alias, $resource] = $this->getNameWithAlias($resource);
 
-        $this->blocks['join'][] = "$type $resource $alias ON $on";
+        if ($alias !== null) {
+            $this->blocks['join'][] = "$type $resource $alias ON $on";
+            return $this;
+        }
+
+        $this->blocks['join'][] = "$type $resource ON $on";
 
         return $this;
+    }
+
+    public function leftJoin(string|array $resource, string $on): static
+    {
+        return $this->join('LEFT JOIN', $resource, $on);
+    }
+
+    public function rightJoin(string|array $resource, string $on): static
+    {
+        return $this->join('RIGHT JOIN', $resource, $on);
+    }
+
+    public function innerJoin(string|array $resource, string $on): static
+    {
+        return $this->join('INNER JOIN', $resource, $on);
     }
 
     public function orderBy(array $columns): static
@@ -149,7 +236,7 @@ class QueryBuilder implements MysqlQueryBuilderInterface
 
     private function getNameWithAlias(string|array $name): array
     {
-        $alias = '';
+        $alias = null;
 
         if (is_array($name) === true) {
             $alias = key($name);
