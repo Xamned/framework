@@ -43,6 +43,12 @@ class Resource
             'action' => 'actionDelete',
             'middleware' => [],
         ],
+        'options' => [
+            'method' => 'OPTIONS',
+            'path' => "",
+            'action' => 'actionList',
+            'middleware' => [],
+        ],
     ];
 
     public function __construct(
