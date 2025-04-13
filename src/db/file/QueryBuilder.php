@@ -18,6 +18,20 @@ class QueryBuilder implements FileQueryBuilderInterface
 
     public function select(array|string $fields): static
     {
+        if (is_string($fields) === true) {
+            $rawFields = explode(',', $fields);
+            $fields = [];
+
+            foreach ($rawFields as $field) {
+                $parts = explode(' as ', $field);
+
+                $column = $parts[0];
+                $alias = $parts[1] ?? $column;
+
+                $fields[$alias] = $column;
+            }
+        }
+
         $this->blocks['select'] = $fields;
 
         return $this;

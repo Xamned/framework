@@ -9,7 +9,7 @@ class IntegerRule implements ValidationRuleInterface
 {
     public function __construct(
         public readonly string $name = 'integer',
-        protected string $message = 'целым числом'
+        protected string $caseLine = 'целым числом'
     ) {
     }
 
@@ -25,15 +25,15 @@ class IntegerRule implements ValidationRuleInterface
         }
 
         if (is_float($value) === true) {
-            throw new ValidationException($this->message);
+            throw new ValidationException($this->caseLine);
         }
 
         if (is_numeric($value) === false) {
-            throw new ValidationException($this->message);
+            throw new ValidationException($this->caseLine);
         }
 
         if (str_contains($value, '.') === true) {
-            throw new ValidationException($this->message);
+            throw new ValidationException($this->caseLine);
         }
     }
 }

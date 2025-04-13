@@ -48,10 +48,10 @@ class Validator implements ValidatorInterface
         return $this->passedRules;
     }
 
-    public function getErrorsMessage(): string
+    public function getErrorsCasesLine(): string
     {
-        $messages = array_map(fn(ValidationException $e): string => $e->getMessage(), $this->errors);
+        $caseLine = array_map(fn(ValidationException $e): string => $e->getMessage(), $this->errors);
 
-        return implode(', ', $messages);
+        return implode(', ', $caseLine);
     }
 }
