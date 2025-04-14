@@ -4,11 +4,13 @@ namespace xamned\framework\console;
 
 use xamned\framework\contracts\ErrorHandlerInterface;
 use \Throwable;
+use xamned\framework\http\MessageTypeEnum;
 
 class ErrorHandler implements ErrorHandlerInterface
 {
     public function __construct(
         private readonly AnsiLineFormater $lineFormater,
+        public string $responseFormat = MessageTypeEnum::HTML->value,
     ) {
     }
 
@@ -36,5 +38,15 @@ class ErrorHandler implements ErrorHandlerInterface
         }
 
         return $message;
+    }
+
+    public function isCompatibleWith(string $type): bool
+    {
+        return $this->responseFormat === $type;
+    }
+
+    public function setResponseFormat(string $responseFormat): void
+    {
+        $this->responseFormat = $responseFormat;
     }
 }
