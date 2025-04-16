@@ -2,7 +2,17 @@
 
 namespace xamned\framework\http\resource\responses;
 
-class DeleteResponse extends BaseResponse
+use xamned\framework\contracts\http\resource\CrudResultInterface;
+
+class DeleteResponse implements CrudResultInterface
 {
-    public int $code = 204;
+    public function getStatusCode(): int
+    {
+        return 204;
+    }
+
+    public function getData(): mixed
+    {
+        return null;
+    }
 }

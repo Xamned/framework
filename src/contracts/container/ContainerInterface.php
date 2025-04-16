@@ -25,4 +25,6 @@ interface ContainerInterface extends PsrContainerInterface // интерфейс
      * @return mixed Результат выполнения обработчика
      */
     function call(object|string $handler, string $method, array $args = []): mixed;
+
+    function set(string $dependencyName, mixed $dependency): void;
 }
