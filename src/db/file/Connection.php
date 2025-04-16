@@ -4,7 +4,7 @@ namespace xamned\framework\db\file;
 
 use InvalidArgumentException;
 use RuntimeException;
-use xamned\framework\contracts\db\DataBaseConnectionInterface;
+use xamned\framework\contracts\db\FileConnectionInterface;
 use xamned\framework\contracts\db\FileQueryBuilderInterface;
 use xamned\framework\contracts\db\ListBuilderFactoryInterface;
 use xamned\framework\contracts\db\ListBuilderInterface;
@@ -12,7 +12,7 @@ use xamned\framework\contracts\db\QueryBuilderInterface;
 use xamned\framework\db\file\enums\FileTypeEnum;
 use xamned\framework\db\mysql\enums\ComparisonOperator;
 
-class Connection implements DataBaseConnectionInterface
+class Connection implements FileConnectionInterface
 {
     protected array $folders;
     protected array $resourceColumns;
