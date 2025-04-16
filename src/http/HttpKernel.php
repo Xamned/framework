@@ -12,25 +12,32 @@ use xamned\framework\event_dispatcher\Message;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
-use xamned\framework\http\resource\responses\BaseResponse;
-use xamned\framework\http\resource\responses\JsonResponse;
+use xamned\framework\contracts\container\ContainerInterface;
+use xamned\framework\contracts\http\resource\CrudResultInterface;
+use xamned\framework\logger\enums\LogContext;
 
 class HttpKernel implements HttpKernelInterface
 {
     public function __construct(
-        private readonly ResponseInterface $response,
         private readonly HTTPRouterInterface  $router,
         private readonly LoggerInterface $logger,
         private readonly ErrorHandlerInterface $errorHandler,
-        private readonly EventDispatcherInterface $eventDispatcher
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly ContainerInterface $container,
     ) {}
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         try {
             $result = $this->router->dispatch($request);
-          
-            $response = $this->createResponse($result, $this->getStatus($request));
+            
+            $response = $this->createResponse($result);
+
+            $status = $response->getStatusCode();
+
+            if ($status < 100 || $status > 599) {
+                $response = $response->withStatus($this->getStatus($request));
+            }
         } catch (HttpException $e) {
             $response = $this->handleError($e);
         } catch (Throwable $e) {
@@ -44,33 +51,25 @@ class HttpKernel implements HttpKernelInterface
     {
         $method = strtoupper($request->getMethod());
         return match($method) {
-            'GET' => 200,
             'POST' => 201,
-            'PUT' => 200,
-            'PATCH' => 200,
             'DELETE' => 204,
+            default => 200,
         };
     }
 
-    protected function createResponse(mixed $result, int $code): ResponseInterface
+    protected function createResponse(mixed $result): ResponseInterface
     {
-        $response = $this->response;
+        $response = $this->container->get(ResponseInterface::class);
 
-        if ($result instanceof JsonResponse === true) {
-            $result = $result->data;
+        if (is_subclass_of($result, CrudResultInterface::class) === true) {
+            $response = $response->withStatus($result->getStatusCode());
+            $result = $result->getData();
         }
 
-        if ($result instanceof BaseResponse === true) {
-            $result = $result->data;
-            $code = $result->code;
-        }
-
-        if (is_array($result) === true) {
-            $result = json_encode($result);
+        if (is_array($result) === true || is_object($result) === true) {
             $response = $response->withHeader('Content-Type', 'application/json');
+            $result = json_encode($result);
         }
-
-        $response = $response->withStatus($code);
 
         $response->getBody()->write($result);
 
@@ -79,9 +78,9 @@ class HttpKernel implements HttpKernelInterface
 
     protected function handleError(Throwable $error, ?int $code = null): ResponseInterface
     {
-        $response = $this->response->withStatus($code ?? $error->getCode());
+        $response = $this->container->get(ResponseInterface::class)->withStatus($code ?? $error->getCode());
 
-        $this->eventDispatcher->trigger('log.context.attach', new Message('APP'));
+        $this->eventDispatcher->trigger(LogContext::ATTACH->value, new Message('APP'));
         $this->logger->error($error->getMessage());
 
         if ($this->errorHandler->isCompatibleWith(MessageTypeEnum::JSON->value) === true) {

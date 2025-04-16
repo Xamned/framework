@@ -96,7 +96,7 @@ final class DIContainer implements ContainerInterface
             throw new DependencyNotFoundException("Зависимость {$id} не существует");
         }
 
-        if (key_exists($id, $this->definitions) === true) {
+        if ($this->hasDefinition($id) === true) {
             return $this->build($this->definitions[$id]);
         }
 
@@ -153,7 +153,26 @@ final class DIContainer implements ContainerInterface
      */
     public function has(string $id): bool
     {
-        return key_exists($id, $this->singletons) === true ||
-            key_exists($id, $this->definitions) === true;
+        return $this->hasSingleton($id) === true || $this->hasDefinition($id) === true;
+    }
+
+    public function hasSingleton(string $id): bool
+    {
+        return isset($this->singletons[$id]);
+    }
+
+    public function hasDefinition(string $id): bool
+    {
+        return isset($this->definitions[$id]);
+    }
+
+    public function set(string $dependencyName, mixed $dependency): void
+    {
+        if ($this->hasSingleton($dependencyName) === true) {
+            $this->singletons[$dependencyName] = $dependency;
+            return;
+        }
+
+        $this->definitions[$dependencyName] = $dependency;
     }
 }

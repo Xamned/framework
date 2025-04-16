@@ -8,6 +8,7 @@ use xamned\framework\contracts\logger\LoggerInterface;
 use xamned\framework\event_dispatcher\Message;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use xamned\framework\logger\enums\LogContext;
 
 final readonly class RequestLogMiddleware implements MiddlewareInterface
 {
@@ -23,7 +24,7 @@ final readonly class RequestLogMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, ResponseInterface $response, callable $next): void
     {
-        $this->eventDispatcher->trigger('log.context.attach', new Message('APP'));
+        $this->eventDispatcher->trigger(LogContext::ATTACH->value, new Message('APP'));
         $this->logger->debug('Выполнено обращение методом ' . $request->getMethod() . ' к эндпоинту ' . $request->getUri()->getPath());
 
         $next($request, $response);

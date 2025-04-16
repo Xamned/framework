@@ -2,7 +2,17 @@
 
 namespace xamned\framework\http\resource\responses;
 
-class UpdateResponse extends BaseResponse
+use xamned\framework\contracts\http\resource\CrudResultInterface;
+
+class UpdateResponse implements CrudResultInterface
 {
-    // ...
+    public function getStatusCode(): int
+    {
+        return 200;
+    }
+
+    public function getData(): mixed
+    {
+        return null;
+    }
 }
