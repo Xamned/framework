@@ -8,11 +8,22 @@ class FormRequest extends AbstractFormRequest
 {
     protected array $dynamicAttributes;
 
+    public function hasAttribute(string $name): bool
+    {
+        if (property_exists($this, $name) === true) {
+            return true;
+        } 
+
+        if (array_key_exists($name, $this->dynamicAttributes) === true) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function addAttribute(string $name, mixed $value = null): void
     {
-        if (property_exists($this, $name) === true 
-            || array_key_exists($name, $this->dynamicAttributes) === true
-        ) {
+        if ($this->hasAttribute($name) === true) {
             throw new InvalidArgumentException('Аттрибут уже существует.');
         }
 

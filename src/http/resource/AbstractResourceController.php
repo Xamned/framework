@@ -4,6 +4,7 @@ namespace xamned\framework\http\resource;
 
 use Psr\Http\Message\ServerRequestInterface;
 use xamned\framework\contracts\container\ContainerInterface;
+use xamned\framework\contracts\form\FormRequestInterface;
 use xamned\framework\contracts\http\FormRequestFactoryInterface;
 use xamned\framework\contracts\http\resource\ResourceDataFilterInterface;
 use xamned\framework\contracts\http\resource\ResourceWriterInterface;
@@ -35,7 +36,7 @@ abstract class AbstractResourceController
             ->setResourceName($this->getResourceName());
     }
 
-    private $forms = [
+    protected $forms = [
         ResourceActionTypesEnum::CREATE->value => FormRequest::class,
         ResourceActionTypesEnum::UPDATE->value => FormRequest::class,
         ResourceActionTypesEnum::PATCH->value => FormRequest::class,
@@ -70,6 +71,19 @@ abstract class AbstractResourceController
      * @return array
      */
     abstract protected function getAccessibleFilters(): array;
+
+    protected function getFormRules(ResourceActionTypesEnum $actionType): array
+    {
+        return [];
+    }
+
+    protected function createForm(ResourceActionTypesEnum $actionType): FormRequestInterface
+    {
+        return $this->formRequestFactory->create(
+            $this->forms[$actionType->value],
+            $this->getFormRules($actionType)
+        );
+    }
 
     /**
      * @throws ForbiddenHttpException
@@ -138,7 +152,7 @@ abstract class AbstractResourceController
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::CREATE);
 
-        $form = $this->formRequestFactory->create($this->forms[ResourceActionTypesEnum::CREATE->value]);
+        $form = $this->createForm(ResourceActionTypesEnum::CREATE);
 
         $form->validate();
 
@@ -149,14 +163,13 @@ abstract class AbstractResourceController
         $this->resourceWriter->create($form->getValues());
 
         return new CreateResponse();
-
     }
 
     public function actionUpdate(string|int $id): UpdateResponse
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::UPDATE);
 
-        $form = $this->formRequestFactory->create($this->forms[ResourceActionTypesEnum::UPDATE->value]);
+        $form = $this->createForm(ResourceActionTypesEnum::UPDATE);
 
         $form->validate();
 
@@ -173,7 +186,7 @@ abstract class AbstractResourceController
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::PATCH);
         
-        $form = $this->formRequestFactory->create($this->forms[ResourceActionTypesEnum::PATCH->value]);
+        $form = $this->createForm(ResourceActionTypesEnum::PATCH);
 
         $form->setSkipEmptyValues();
 
