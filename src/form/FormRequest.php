@@ -6,7 +6,7 @@ use InvalidArgumentException;
 
 class FormRequest extends AbstractFormRequest
 {
-    protected array $dynamicAttributes;
+    protected array $dynamicAttributes = [];
 
     public function addAttribute(string $name, mixed $value = null): void
     {

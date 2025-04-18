@@ -10,7 +10,7 @@ use xamned\framework\contracts\http\resource\ResourceWriterInterface;
 use xamned\framework\form\FormRequest;
 use xamned\framework\http\exceptions\ForbiddenHttpException;
 use xamned\framework\http\exceptions\HttpBadRequestException;
-use xamned\framework\http\resource\ResourceActionTypesEnum;
+use xamned\framework\http\exceptions\HttpNotFoundException;
 use xamned\framework\http\resource\responses\CreateResponse;
 use xamned\framework\http\resource\responses\DeleteResponse;
 use xamned\framework\http\resource\responses\JsonResponse;
@@ -191,9 +191,13 @@ abstract class AbstractResourceController
     public function actionDelete(string|int $id): DeleteResponse
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::DELETE);
-        
+
+        if (empty($this->resourceDataFilter->filterAll(['filter' => ['id' => ['$eq' => $id]]])) === true) {
+            throw new HttpNotFoundException('Resource not found', 404);
+        }
+
         $this->resourceWriter->delete($id);
-        
+
         return new DeleteResponse();
     }
 }
