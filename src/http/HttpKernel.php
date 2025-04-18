@@ -32,12 +32,6 @@ class HttpKernel implements HttpKernelInterface
             $result = $this->router->dispatch($request);
             
             $response = $this->createResponse($result);
-
-            $status = $response->getStatusCode();
-
-            if ($status < 100 || $status > 599) {
-                $response = $response->withStatus($this->getStatus($request));
-            }
         } catch (HttpException $e) {
             $response = $this->handleError($e);
         } catch (Throwable $e) {
@@ -45,16 +39,6 @@ class HttpKernel implements HttpKernelInterface
         }
 
         return $response;
-    }
-
-    protected function getStatus(ServerRequestInterface $request): int
-    {
-        $method = strtoupper($request->getMethod());
-        return match($method) {
-            'POST' => 201,
-            'DELETE' => 204,
-            default => 200,
-        };
     }
 
     protected function createResponse(mixed $result): ResponseInterface

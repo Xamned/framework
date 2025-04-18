@@ -166,13 +166,13 @@ final class DIContainer implements ContainerInterface
         return isset($this->definitions[$id]);
     }
 
-    public function set(string $dependencyName, mixed $dependency): void
+    public function attach(string $dependencyName, mixed $dependency): void
     {
-        if ($this->hasSingleton($dependencyName) === true) {
-            $this->singletons[$dependencyName] = $dependency;
-            return;
-        }
-
         $this->definitions[$dependencyName] = $dependency;
+    }
+
+    public function attachSingleton(string $dependencyName, mixed $dependency): void
+    {
+        $this->singletons[$dependencyName] = $dependency;
     }
 }

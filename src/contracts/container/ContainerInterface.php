@@ -26,5 +26,7 @@ interface ContainerInterface extends PsrContainerInterface // интерфейс
      */
     function call(object|string $handler, string $method, array $args = []): mixed;
 
-    function set(string $dependencyName, mixed $dependency): void;
+    function attach(string $dependencyName, mixed $dependency): void;
+
+    function attachSingleton(string $dependencyName, mixed $dependency): void;
 }
