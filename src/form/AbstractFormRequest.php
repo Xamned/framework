@@ -10,8 +10,8 @@ use xamned\framework\validator\exceptions\ValidationException;
 abstract class AbstractFormRequest implements FormRequestInterface
 {
     protected bool $skipEmptyValues = false;
-    protected array $dynamicRules;
-    protected array $errors;
+    protected array $dynamicRules = [];
+    protected array $errors = [];
 
     public function __construct(
         private readonly ValidatorFactoryInterface $validatorFactory,

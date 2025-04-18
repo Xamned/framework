@@ -25,6 +25,8 @@ class Connection implements DataBaseConnectionInterface
             $config['dbPassword'],
             array_merge($this->pdoOptions, $config['options'] ?? []),
         );
+
+        $this->pdo->setAttribute(\PDO::ATTR_AUTOCOMMIT, true);
     }
 
     private function prepare(MysqlQueryBuilderInterface $query): \PDOStatement
