@@ -9,6 +9,7 @@ use xamned\framework\contracts\validator\ValidatorInterface;
 use xamned\framework\validator\rules\BooleanRule;
 use xamned\framework\validator\rules\FloatRule;
 use xamned\framework\validator\rules\IntegerRule;
+use xamned\framework\validator\rules\RequireRule;
 use xamned\framework\validator\rules\StringRule;
 use xamned\framework\validator\exceptions\ValidationRuleNotFoundException;
 
@@ -19,6 +20,7 @@ class ValidatorFactory implements ValidatorFactoryInterface
         'float' => FloatRule::class,
         'string' => StringRule::class,
         'boolean' => BooleanRule::class,
+        'require' => RequireRule::class,
     ];
 
     protected string $validator = Validator::class;
@@ -30,11 +32,11 @@ class ValidatorFactory implements ValidatorFactoryInterface
         $this->rules = array_merge($this->rules, $rules);
     }
 
-    public function create(array $config): ValidatorInterface
+    public function create(array $ruleNames): ValidatorInterface
     {
         $rules = [];
 
-        foreach ($config as $ruleName) {
+        foreach ($ruleNames as $ruleName) {
             if (isset($this->rules[$ruleName]) === false) {
                 throw new ValidationRuleNotFoundException('Правило валидации не найдено');
             }
