@@ -82,7 +82,7 @@ class ValidatorFactory implements ValidatorFactoryInterface
         $contract = ValidationRuleInterface::class;
 
         if (is_subclass_of($className, $contract) === false) {
-            throw new \InvalidArgumentException("$className не соответствует интерфейсу - " . $contract);
+            throw new \InvalidArgumentException("$className не соответствует интерфейсу - $contract");
         }
     }
 
