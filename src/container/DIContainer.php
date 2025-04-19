@@ -67,16 +67,14 @@ final class DIContainer implements ContainerInterface
         $dependencies = [];
 
         foreach ($parameters as $parameter) {
-            if (
-                $parameter->getType() instanceof ReflectionUnionType
-                || $parameter->getType()?->isBuiltin() === true
-                || $parameter->getType()?->isBuiltin() === null
-                || is_array($parameter) === true
-            ) {
+            if (isset($args[$parameter->name]) === true) {
+                $dependencies[$parameter->name] = $args[$parameter->name];
                 continue;
             }
 
-            $dependencies[] = $this->get($parameter->getType()->getName());
+            if ($this->isDependency($parameter) === true) {
+                $dependencies[$parameter->name] = $this->get($parameter->getType()->getName());
+            }
         }
 
         return $reflection->newInstanceArgs(array_merge($dependencies, $args));
@@ -122,27 +120,9 @@ final class DIContainer implements ContainerInterface
         $parameters = [];
 
         foreach ($reflection->getParameters() as $parameter) {
-            if ($parameter->getType() instanceof ReflectionUnionType) {
-                continue;
+            if ($this->isDependency($parameter) === true) {
+                $parameters[] = $this->get($parameter->getType()->getName());
             }
-
-            if ($parameter->getType()?->isBuiltin() === true) {
-                continue;
-            }
-
-            if ($parameter->getType()?->isBuiltin() === null) {
-                continue;
-            }
-
-            if (is_array($parameter) === true) {
-                continue;
-            }
-
-            if ($parameter->isDefaultValueAvailable() === true) {
-                continue;
-            }
-
-            $parameters[] = $this->get($parameter->getType()->getName());
         }
 
         return $reflection->invokeArgs($handler, array_merge($args, $parameters));
@@ -174,5 +154,30 @@ final class DIContainer implements ContainerInterface
     public function attachSingleton(string $dependencyName, mixed $dependency): void
     {
         $this->singletons[$dependencyName] = $dependency;
+    }
+
+    private function isDependency(ReflectionParameter $parameter): bool
+    {
+        if ($parameter->getType() instanceof ReflectionUnionType) {
+            return false;
+        }
+
+        if ($parameter->getType()?->isBuiltin() === true) {
+            return false;
+        }
+
+        if ($parameter->getType()?->isBuiltin() === null) {
+            return false;
+        }
+
+        if (is_array($parameter) === true) {
+            return false;
+        }
+
+        if ($parameter->isDefaultValueAvailable() === true) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -27,6 +27,7 @@
     "require-dev": {
         "codeception/codeception": "^5.1",
         "codeception/module-phpbrowser": "^3.0",
-        "codeception/module-asserts": "^3.0"
+        "codeception/module-asserts": "^3.0",
+        "symfony/var-dumper": "^7.2"
     }
 }
