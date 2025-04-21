@@ -4,7 +4,7 @@ namespace xamned\framework\contracts\validator;
 
 interface ValidatorFactoryInterface
 {
-    public function create(array $ruleNames): ValidatorInterface;
+    public function create(array $rules): ValidatorInterface;
 
     public function attachRule(string $name, array $ruleConfig): void;
 

@@ -11,7 +11,6 @@ use xamned\framework\validator\rules\FloatRule;
 use xamned\framework\validator\rules\IntegerRule;
 use xamned\framework\validator\rules\RequireRule;
 use xamned\framework\validator\rules\StringRule;
-use xamned\framework\validator\exceptions\ValidationRuleNotFoundException;
 
 class ValidatorFactory implements ValidatorFactoryInterface
 {
@@ -32,23 +31,35 @@ class ValidatorFactory implements ValidatorFactoryInterface
         $this->rules = array_merge($this->rules, $rules);
     }
 
-    public function create(array $ruleNames): ValidatorInterface
+    public function create(array $rules): ValidatorInterface
     {
-        $rules = [];
+        $result = [];
 
-        foreach ($ruleNames as $ruleName) {
-            if (isset($this->rules[$ruleName]) === false) {
-                throw new ValidationRuleNotFoundException('Правило валидации не найдено');
+        foreach ($rules as $rule) {
+            $ruleName = $rule;
+            
+            if (is_array($rule) === true) {
+                $ruleName = $rule[0];
+
+                unset($rule[0]);
+
+                $ruleConfig = $rule;
             }
 
-            $rules[] = $this->createRule($ruleName);
+            $result[] = $this->createRule($ruleName, $ruleConfig ?? []);
         }
 
-        return $this->container->build($this->validator, ['rules' => $rules]);
+        return $this->container->build($this->validator, ['rules' => $result]);
     }
 
-    private function createRule(string $name): ValidationRuleInterface
+    private function createRule(string $name, array $config = []): ValidationRuleInterface
     {
+        if (isset($this->rules[$name]) === false) {
+            $this->checkByRuleInterface($name);
+
+            return $this->container->build($name, $config);
+        }
+
         $ruleConfig = $this->rules[$name];
 
         if (is_array($ruleConfig) === false) {
@@ -58,7 +69,21 @@ class ValidatorFactory implements ValidatorFactoryInterface
         $ruleClass = $ruleConfig['className'];
         unset($ruleConfig['className']);
 
-        return $this->container->build($ruleClass, $ruleConfig);
+        return $this->container->build($ruleClass, array_merge($ruleConfig, $config));
+    }
+
+    /**
+     * @param string $className
+     * @throws \InvalidArgumentException
+     * @return void
+     */
+    private function checkByRuleInterface(string $className): void
+    {
+        $contract = ValidationRuleInterface::class;
+
+        if (is_subclass_of($className, $contract) === false) {
+            throw new \InvalidArgumentException("$className не соответствует интерфейсу - $contract");
+        }
     }
 
     public function attachRule(string $name, array|string $ruleConfig): void
@@ -67,9 +92,7 @@ class ValidatorFactory implements ValidatorFactoryInterface
             ? $ruleConfig['className'] 
             : $ruleConfig;
 
-        if (is_subclass_of($className, ValidationRuleInterface::class) === false) {
-            throw new \InvalidArgumentException("$className не соответствует интерфейсу - " . ValidationRuleInterface::class);
-        }
+        $this->checkByRuleInterface($className);
 
         $this->rules[$name] = $ruleConfig;
     }
@@ -95,9 +118,7 @@ class ValidatorFactory implements ValidatorFactoryInterface
 
     public function setValidator(string $validator): void
     {
-        if (is_subclass_of($validator, ValidatorInterface::class) === false) {
-            throw new \InvalidArgumentException("$validator не соответствует интерфейсу - " . ValidatorInterface::class);
-        }
+        $this->checkByRuleInterface($validator);
 
         $this->validator = $validator;
     }

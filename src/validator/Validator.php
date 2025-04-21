@@ -20,7 +20,7 @@ class Validator implements ValidatorInterface
 
     public function validate(mixed $value): void
     {
-        /** @var $rule ValidationRuleInterface */
+        /** @var ValidationRuleInterface $rule */
         foreach ($this->rules as $rule) {
             try {
                 $rule->execute($value);
