@@ -20,7 +20,7 @@ class FloatRule implements ValidationRuleInterface
 
     public function execute(mixed $value): void
     {
-        if (is_float($value) === true) {
+        if (is_float($value) === true || empty($value) === true) {
             return;
         }
 

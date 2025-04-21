@@ -20,8 +20,8 @@ class StringRule implements ValidationRuleInterface
 
     public function execute(mixed $value): void
     {
-        if (is_string($value) === false) {
+        if (empty($value) === false && is_string($value) === false) {
             throw new ValidationException($this->caseLine);
-        } 
+        }
     }
 }
