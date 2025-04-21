@@ -115,6 +115,8 @@ class Connection implements DataBaseConnectionInterface
 
         $statement = $this->pdo->prepare("DELETE FROM $resource WHERE $whereSql");
 
+        $statement->execute($bindings);
+
         if ($statement->rowCount() === 0) {
             throw new HttpNotFoundException('Ресурс не найден');
         }
