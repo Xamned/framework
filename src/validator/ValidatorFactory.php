@@ -33,7 +33,7 @@ class ValidatorFactory implements ValidatorFactoryInterface
 
     public function create(array $rules): ValidatorInterface
     {
-        $rules = [];
+        $result = [];
 
         foreach ($rules as $rule) {
             $ruleName = $rule;
@@ -46,10 +46,10 @@ class ValidatorFactory implements ValidatorFactoryInterface
                 $ruleConfig = $rule;
             }
 
-            $rules[] = $this->createRule($ruleName, $ruleConfig ?? []);
+            $result[] = $this->createRule($ruleName, $ruleConfig ?? []);
         }
 
-        return $this->container->build($this->validator, ['rules' => $rules]);
+        return $this->container->build($this->validator, ['rules' => $result]);
     }
 
     private function createRule(string $name, array $config = []): ValidationRuleInterface
