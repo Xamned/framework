@@ -47,7 +47,7 @@ class HttpKernel implements HttpKernelInterface
 
         if (is_subclass_of($result, CrudResultInterface::class) === true) {
             $response = $response->withStatus($result->getStatusCode());
-            $result = $result->getData();
+            $result = $result->getData() ?? '';
         }
 
         if (is_array($result) === true || is_object($result) === true) {
