@@ -97,6 +97,16 @@ class JsonListBuilder extends AbstractListBuilder
      */
     private function fromNestedObject(array $data, array $columns, int $depth = 0): void
     {
+        if (count($columns) === 1) {
+            $this->data = array_map(
+                function ($item) use ($columns): array {
+                    return [$columns[0] => $item];
+                },
+                $data
+            );
+            return;
+        }
+
         $column = $columns[$depth];
         $values = array_keys($data);
 
