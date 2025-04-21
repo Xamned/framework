@@ -5,6 +5,8 @@ namespace xamned\framework\db\mysql;
 use xamned\framework\contracts\db\DataBaseConnectionInterface;
 use xamned\framework\contracts\db\MysqlQueryBuilderInterface;
 use xamned\framework\contracts\db\QueryBuilderInterface;
+use xamned\framework\http\exceptions\HttpBadRequestException;
+use xamned\framework\http\exceptions\HttpNotFoundException;
 
 class Connection implements DataBaseConnectionInterface
 {
@@ -98,7 +100,9 @@ class Connection implements DataBaseConnectionInterface
 
         $statement = $this->pdo->prepare("INSERT INTO $resource ($columns) VALUES ($values)");
 
-        $statement->execute($data);
+        if ($statement->execute($data) === false) {
+            throw new HttpBadRequestException('Ошибка: ' . $statement->errorInfo()[2]);
+        }
 
         return $statement->rowCount();
     }
@@ -111,7 +115,9 @@ class Connection implements DataBaseConnectionInterface
 
         $statement = $this->pdo->prepare("DELETE FROM $resource WHERE $whereSql");
 
-        $statement->execute($bindings);
+        if ($statement->rowCount() === 0) {
+            throw new HttpNotFoundException('Ресурс не найден');
+        }
 
         return $statement->rowCount();
     }

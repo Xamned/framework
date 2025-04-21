@@ -205,10 +205,6 @@ abstract class AbstractResourceController
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::DELETE);
 
-        if (empty($this->resourceDataFilter->filterAll(['filter' => ['id' => ['$eq' => $id]]])) === true) {
-            throw new HttpNotFoundException('Resource not found', 404);
-        }
-
         $this->resourceWriter->delete($id);
 
         return new DeleteResponse();
