@@ -20,7 +20,7 @@ class IntegerRule implements ValidationRuleInterface
 
     public function execute(mixed $value): void
     {
-        if (is_integer($value) === true) {
+        if (is_integer($value) === true || empty($value) === true) {
             return;
         }
 
