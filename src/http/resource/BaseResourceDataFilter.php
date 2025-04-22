@@ -114,7 +114,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
             }
 
             if (in_array($field, $this->accessibleFilters) === false) {
-                throw new InvalidArgumentException('Нельзя отфильтровать ресурс по дполю ' . $field);
+                throw new InvalidArgumentException('Нельзя отфильтровать ресурс по полю ' . $field);
             }
         }
     }
