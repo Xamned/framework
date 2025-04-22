@@ -2,16 +2,17 @@
 
 namespace xamned\framework\http\resource;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use xamned\framework\contracts\container\ContainerInterface;
 use xamned\framework\contracts\form\FormRequestInterface;
 use xamned\framework\contracts\http\FormRequestFactoryInterface;
 use xamned\framework\contracts\http\resource\ResourceDataFilterInterface;
 use xamned\framework\contracts\http\resource\ResourceWriterInterface;
+use xamned\framework\contracts\resource\RelationshipsManagerInterface;
 use xamned\framework\form\FormRequest;
 use xamned\framework\http\exceptions\ForbiddenHttpException;
 use xamned\framework\http\exceptions\HttpBadRequestException;
-use xamned\framework\http\exceptions\HttpNotFoundException;
 use xamned\framework\http\resource\responses\CreateResponse;
 use xamned\framework\http\resource\responses\DeleteResponse;
 use xamned\framework\http\resource\responses\JsonResponse;
@@ -25,6 +26,7 @@ abstract class AbstractResourceController
         protected ServerRequestInterface $request,
         protected FormRequestFactoryInterface $formRequestFactory,
         protected ResourceWriterInterface $resourceWriter,
+        protected RelationshipsManagerInterface $relationshipsManager,
         protected ContainerInterface $container,
     ) {
         $this->resourceDataFilter
@@ -35,6 +37,10 @@ abstract class AbstractResourceController
 
         $this->resourceWriter
             ->setResourceName($this->getResourceName());
+
+        $this->relationshipsManager
+            ->setResourceName($this->getResourceName())
+            ->setRelationships($this->getRelationships());
     }
 
     protected $forms = [
@@ -93,12 +99,32 @@ abstract class AbstractResourceController
         return [];
     }
 
+    protected function getFormName(ResourceActionTypesEnum $actionType): ?string
+    {
+        return '';
+    }
+
     protected function createForm(ResourceActionTypesEnum $actionType): FormRequestInterface
     {
         return $this->formRequestFactory->create(
             $this->forms[$actionType->value],
+            $this->getFormName($actionType),
             $this->getFormRules($actionType)
         );
+    }
+
+    protected function setResponseStatus(int $code, string $reasonPhrase = ''): void
+    {
+        /** @var ResponseInterface */
+        $response = $this->container->get(ResponseInterface::class);
+        $response = $response->withStatus($code, $reasonPhrase);
+
+        $this->container->attach(ResponseInterface::class, $response);
+    }
+
+    protected function getRelationships(): array
+    {
+        return [];
     }
 
     /**
@@ -178,6 +204,10 @@ abstract class AbstractResourceController
 
         $this->resourceWriter->create($form->getValues());
 
+        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => $form->getValues()]);
+
+        $this->relationshipsManager->manage($this->request, $resourceItem);
+
         return new CreateResponse();
     }
 
@@ -194,6 +224,10 @@ abstract class AbstractResourceController
         }
 
         $this->resourceWriter->update($id, $form->getValues());
+
+        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => ['id' => $id]]);
+
+        $this->relationshipsManager->manage($this->request, $resourceItem);
 
         return new UpdateResponse();
     }
@@ -214,12 +248,20 @@ abstract class AbstractResourceController
 
         $this->resourceWriter->patch($id, $form->getValues());
 
+        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => ['id' => $id]]);
+
+        $this->relationshipsManager->manage($this->request, $resourceItem);
+
         return new PatchResponse();
     }
 
     public function actionDelete(string|int $id): DeleteResponse
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::DELETE);
+
+        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => ['id' => $id]]);
+
+        $this->relationshipsManager->manage($this->request, $resourceItem);
 
         $this->resourceWriter->delete($id);
 
