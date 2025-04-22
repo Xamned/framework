@@ -30,7 +30,8 @@ abstract class AbstractResourceController
         $this->resourceDataFilter
             ->setResourceName($this->getResourceName())
             ->setAccessibleFields($this->getAccessibleFields())
-            ->setAccessibleFilters($this->getAccessibleFilters());
+            ->setAccessibleFilters($this->getAccessibleFilters())
+            ->setExpands($this->getExpands());
 
         $this->resourceWriter
             ->setResourceName($this->getResourceName());
@@ -71,6 +72,21 @@ abstract class AbstractResourceController
      * @return array
      */
     abstract protected function getAccessibleFilters(): array;
+
+    /**
+     * Возврат имен ресурсов, доступных к расширению
+     * Пример запроса:
+     * ?expand=months
+     *
+     * Пример записи:
+     * [
+     *      'expandResourceName' => 'expandResourceName.expandFieldName = resourceName.fieldName'
+     *      ...
+     * ]
+     *
+     * @return array
+     */
+    abstract protected function getExpands(): array;
 
     protected function getFormRules(ResourceActionTypesEnum $actionType): array
     {

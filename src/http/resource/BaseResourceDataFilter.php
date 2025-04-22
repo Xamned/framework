@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use xamned\framework\contracts\db\DataBaseConnectionInterface;
 use xamned\framework\contracts\db\QueryBuilderInterface;
 use xamned\framework\contracts\http\resource\ResourceDataFilterInterface;
+use xamned\framework\http\exceptions\HttpBadRequestException;
 
 abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
 {
@@ -14,6 +15,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     private readonly QueryBuilderInterface $queryBuilder;
     private array $accessibleFields = [];
     private array $accessibleFilters = [];
+    private array $expands = [];
 
     protected function setDbConnection(DataBaseConnectionInterface $dbConnection): void
     {
@@ -40,6 +42,12 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     public function setAccessibleFilters(array $filterNames): static
     {
         $this->accessibleFilters = $filterNames;
+        return $this;
+    }
+
+    public function setExpands(array $expands): static
+    {
+        $this->expands = $expands;
         return $this;
     }
 
@@ -79,6 +87,16 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
             }
         }
 
+        if (isset($condition['expand']) === true) {
+            $expandingResources = explode(',', $condition['expand']);
+
+            foreach ($expandingResources as $expandingResource) {
+                $this->checkValidExpand($expandingResource);
+
+                $query->join('LEFT', $expandingResource, $this->expands[$expandingResource]);
+            }
+        }
+
         return $query;
     }
 
@@ -96,6 +114,16 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
             if (in_array($field, $this->accessibleFilters) === false) {
                 throw new InvalidArgumentException('Нельзя отфильтровать ресурс по полю ' . $field);
             }
+        }
+    }
+
+    /**
+     * @throws HttpBadRequestException
+     */
+    private function checkValidExpand(string $expand): void
+    {
+        if (in_array($expand, $this->expands) === false) {
+            throw new HttpBadRequestException('Указанного к расширению ресурса ' . $expand . ' не существует');
         }
     }
 
