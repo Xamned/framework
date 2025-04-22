@@ -94,6 +94,8 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
                 $this->checkValidExpand($expandingResource);
 
                 $query->join('LEFT', $expandingResource, $this->expands[$expandingResource]);
+
+                $this->addExpandFields($expandingResource, $query);
             }
         }
 
@@ -112,7 +114,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
             }
 
             if (in_array($field, $this->accessibleFilters) === false) {
-                throw new InvalidArgumentException('Нельзя отфильтровать ресурс по полю ' . $field);
+                throw new InvalidArgumentException('Нельзя отфильтровать ресурс по дполю ' . $field);
             }
         }
     }
@@ -123,7 +125,18 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     private function checkValidExpand(string $expand): void
     {
         if (in_array($expand, $this->expands) === false) {
-            throw new HttpBadRequestException('Указанного к расширению ресурса ' . $expand . ' не существует');
+            throw new HttpBadRequestException('Расширение ресурса ' . $expand . ' недоступно');
+        }
+
+        if (in_array($expand, array_keys($this->accessibleFields)) === false) {
+            throw new HttpBadRequestException('У ресурса ' . $expand . ' нет полей доступных к расширению');
+        }
+    }
+
+    private function addExpandFields(string $expandingResource, QueryBuilderInterface $query): void
+    {
+        foreach ($this->accessibleFields[$expandingResource] as $field) {
+            $query->select([$expandingResource . '.' . $field]);
         }
     }
 
