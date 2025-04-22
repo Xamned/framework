@@ -78,7 +78,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     private function buildQuery(array $condition): QueryBuilderInterface
     {
         $query = $this->queryBuilder
-            ->select($condition['fields'] ?? $this->accessibleFields)
+            ->select($condition['fields'] ?? array_filter($this->accessibleFields, function($field) {return is_array($field) === false;}))
             ->from($this->resourceName);
 
         if (isset($condition['filter']) === true) {
