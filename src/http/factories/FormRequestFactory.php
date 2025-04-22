@@ -15,7 +15,7 @@ class FormRequestFactory implements FormRequestFactoryInterface
         private readonly ServerRequestInterface $request,
     ) {}
 
-    public function create(string $formClassName, array $rules = []): FormRequestInterface
+    public function create(string $formClassName, string $formName = '', array $rules = []): FormRequestInterface
     {
         if (is_subclass_of($formClassName, FormRequestInterface::class) === false) {
             throw new \InvalidArgumentException("$formClassName не соответствует интерфейсу - " . FormRequestInterface::class);
@@ -32,7 +32,13 @@ class FormRequestFactory implements FormRequestFactoryInterface
             }
         }
 
-        $form->load($this->request->getParsedBody());
+        $data = $this->request->getParsedBody();
+
+        if ($formName !== '') {
+            $data = $data[$formName];
+        }
+
+        $form->load($data);
 
         return $form;
     }
