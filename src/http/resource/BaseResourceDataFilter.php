@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use xamned\framework\contracts\db\DataBaseConnectionInterface;
 use xamned\framework\contracts\db\QueryBuilderInterface;
 use xamned\framework\contracts\http\resource\ResourceDataFilterInterface;
+use xamned\framework\http\exceptions\HttpBadRequestException;
 
 abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
 {
@@ -14,6 +15,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     private readonly QueryBuilderInterface $queryBuilder;
     private array $accessibleFields = [];
     private array $accessibleFilters = [];
+    private array $expands = [];
 
     protected function setDbConnection(DataBaseConnectionInterface $dbConnection): void
     {
@@ -40,6 +42,12 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     public function setAccessibleFilters(array $filterNames): static
     {
         $this->accessibleFilters = $filterNames;
+        return $this;
+    }
+
+    public function setExpands(array $expands): static
+    {
+        $this->expands = $expands;
         return $this;
     }
 
@@ -70,12 +78,24 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     private function buildQuery(array $condition): QueryBuilderInterface
     {
         $query = $this->queryBuilder
-            ->select($condition['fields'] ?? $this->accessibleFields)
+            ->select($condition['fields'] ?? array_filter($this->accessibleFields, function($field) {return is_array($field) === false;}))
             ->from($this->resourceName);
 
         if (isset($condition['filter']) === true) {
             foreach ($condition['filter'] as $field => $fieldCondition) {
                 $query->where($this->mapCondition($field, $fieldCondition));
+            }
+        }
+
+        if (isset($condition['expand']) === true) {
+            $expandingResources = explode(',', $condition['expand']);
+
+            foreach ($expandingResources as $expandingResource) {
+                $this->checkValidExpand($expandingResource);
+
+                $query->join('LEFT', $expandingResource, $this->expands[$expandingResource]);
+
+                $this->addExpandFields($expandingResource, $query);
             }
         }
 
@@ -96,6 +116,27 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
             if (in_array($field, $this->accessibleFilters) === false) {
                 throw new InvalidArgumentException('Нельзя отфильтровать ресурс по полю ' . $field);
             }
+        }
+    }
+
+    /**
+     * @throws HttpBadRequestException
+     */
+    private function checkValidExpand(string $expand): void
+    {
+        if (in_array($expand, $this->expands) === false) {
+            throw new HttpBadRequestException('Расширение ресурса ' . $expand . ' недоступно');
+        }
+
+        if (in_array($expand, array_keys($this->accessibleFields)) === false) {
+            throw new HttpBadRequestException('У ресурса ' . $expand . ' нет полей доступных к расширению');
+        }
+    }
+
+    private function addExpandFields(string $expandingResource, QueryBuilderInterface $query): void
+    {
+        foreach ($this->accessibleFields[$expandingResource] as $field) {
+            $query->select([$expandingResource . '.' . $field]);
         }
     }
 

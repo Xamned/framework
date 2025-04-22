@@ -10,6 +10,8 @@ interface ResourceDataFilterInterface
 
     function setAccessibleFilters(array $filterNames): static;
 
+    function setExpands(array $expands): static;
+
     /**
      * Возврат коллекции ресурсов, отфильтрованных в соответствии с условиями
      *
