@@ -140,10 +140,10 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
                 if (in_array($resourceField, $this->accessibleFields[$resource]) === false) {
                     throw new InvalidArgumentException('Поле ' . $resourceField . ' из ' . $resource . ' недоступно к получению');
                 }
-            }
-
-            if (array_key_exists($field, $this->accessibleFields) === false) {
-                throw new InvalidArgumentException('Поле ' . $field . ' недоступно к получению');
+            } else {
+                if (array_key_exists($field, $this->accessibleFields) === false) {
+                    throw new InvalidArgumentException('Поле ' . $field . ' недоступно к получению');
+                }
             }
         }
     }
