@@ -170,7 +170,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
             list($resource, $resourceField) = explode('.', $field, 2);
 
             if ($resource === $expandingResource) {
-                $query->select([$expandingResource . '.' . $field => $expandingResource . '.' . $field]);
+                $query->select([$expandingResource . '.' . $resourceField => $expandingResource . '.' . $resourceField]);
             }
         }
     }
