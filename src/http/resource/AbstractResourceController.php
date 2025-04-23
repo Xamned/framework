@@ -13,6 +13,7 @@ use xamned\framework\contracts\resource\RelationshipsManagerInterface;
 use xamned\framework\form\FormRequest;
 use xamned\framework\http\exceptions\ForbiddenHttpException;
 use xamned\framework\http\exceptions\HttpBadRequestException;
+use xamned\framework\http\exceptions\HttpNotFoundException;
 use xamned\framework\http\resource\responses\CreateResponse;
 use xamned\framework\http\resource\responses\DeleteResponse;
 use xamned\framework\http\resource\responses\JsonResponse;
@@ -92,7 +93,10 @@ abstract class AbstractResourceController
      *
      * @return array
      */
-    abstract protected function getExpands(): array;
+    protected function getExpands(): array
+    {
+        return [];
+    }
 
     protected function getFormRules(ResourceActionTypesEnum $actionType): array
     {
@@ -119,7 +123,9 @@ abstract class AbstractResourceController
         $response = $this->container->get(ResponseInterface::class);
         $response = $response->withStatus($code, $reasonPhrase);
 
-        $this->container->attach(ResponseInterface::class, $response);
+        $this->container->attach(ResponseInterface::class, function() use ($response) {
+            return $response;
+        });
     }
 
     protected function getRelationships(): array
@@ -187,6 +193,10 @@ abstract class AbstractResourceController
 
         $data = $this->resourceDataFilter->filterOne($this->request->getQueryParams());
 
+        if ($data === null) {
+            throw new HttpNotFoundException('Запрашиваемый ресурс не найден');
+        }
+
         return new JsonResponse($data);
     }
 
@@ -223,9 +233,13 @@ abstract class AbstractResourceController
             throw new HttpBadRequestException(implode(', ', $form->getErrors()));
         }
 
-        $this->resourceWriter->update($id, $form->getValues());
-
         $resourceItem = $this->resourceDataFilter->filterOne(['filter' => ['id' => $id]]);
+
+        if ($resourceItem === null) {
+            throw new HttpNotFoundException('Запрашиваемый ресурс не найден');
+        }
+
+        $this->resourceWriter->update($id, $form->getValues());
 
         $this->relationshipsManager->manage($this->request, $resourceItem);
 
@@ -246,9 +260,13 @@ abstract class AbstractResourceController
             throw new HttpBadRequestException(implode(', ', $form->getErrors()));
         }
 
-        $this->resourceWriter->patch($id, $form->getValues());
-
         $resourceItem = $this->resourceDataFilter->filterOne(['filter' => ['id' => $id]]);
+
+        if ($resourceItem === null) {
+            throw new HttpNotFoundException('Запрашиваемый ресурс не найден');
+        }
+
+        $this->resourceWriter->patch($id, $form->getValues());
 
         $this->relationshipsManager->manage($this->request, $resourceItem);
 
@@ -260,6 +278,10 @@ abstract class AbstractResourceController
         $this->checkCallAvailability(ResourceActionTypesEnum::DELETE);
 
         $resourceItem = $this->resourceDataFilter->filterOne(['filter' => ['id' => $id]]);
+
+        if ($resourceItem === null) {
+            throw new HttpNotFoundException('Запрашиваемый ресурс не найден');
+        }
 
         $this->relationshipsManager->manage($this->request, $resourceItem);
 

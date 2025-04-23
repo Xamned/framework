@@ -140,9 +140,13 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
         }
     }
 
-    private function mapCondition(string $field, array $fieldCondition): array
+    private function mapCondition(string $field, mixed $fieldCondition): array
     {
         $queryReadableConditions = [];
+
+        if (is_array($fieldCondition) === false) {
+            return [$field => $fieldCondition];
+        }
 
         foreach ($fieldCondition as $operator => $conditionValue) {
             $queryReadableConditions[] = match ($operator) {

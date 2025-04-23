@@ -37,7 +37,13 @@ class RelationshipsManager implements RelationshipsManagerInterface
             return;
         }
 
-        $relationships = $request->getParsedBody()['relationships'];
+        $body = $request->getParsedBody();
+
+        if (isset($body['relationships']) === false) {
+            return;
+        }
+
+        $relationships = $body['relationships'];
 
         foreach ($this->relationships as $name => $config) {
             if (isset($relationships[$name], $config[$method]) === false) {
