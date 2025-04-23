@@ -124,11 +124,11 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
      */
     private function checkValidExpand(string $expand): void
     {
-        if (in_array($expand, $this->expands) === false) {
+        if (array_key_exists($expand, $this->expands) === false) {
             throw new HttpBadRequestException('Расширение ресурса ' . $expand . ' недоступно');
         }
 
-        if (in_array($expand, array_keys($this->accessibleFields)) === false) {
+        if (array_key_exists($expand, $this->accessibleFields) === false) {
             throw new HttpBadRequestException('У ресурса ' . $expand . ' нет полей доступных к расширению');
         }
     }
