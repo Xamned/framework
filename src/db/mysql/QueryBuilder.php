@@ -184,11 +184,11 @@ class QueryBuilder implements MysqlQueryBuilderInterface
         [$alias, $resource] = $this->getNameWithAlias($resource);
 
         if ($alias !== null) {
-            $this->blocks['join'][] = "$type $resource $alias ON $on";
+            $this->blocks['join'][] = "$type JOIN $resource $alias ON $on";
             return $this;
         }
 
-        $this->blocks['join'][] = "$type $resource ON $on";
+        $this->blocks['join'][] = "$type JOIN $resource ON $on";
 
         return $this;
     }
