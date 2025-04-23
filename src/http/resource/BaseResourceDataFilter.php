@@ -79,8 +79,10 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
 
     private function buildQuery(array $condition): QueryBuilderInterface
     {
+        $requestedFields = explode(',', $condition['fields']);
+
         $query = $this->queryBuilder
-            ->select(array_filter($condition['fields'], function ($field) {
+            ->select(array_filter($requestedFields, function ($field) {
                 return str_contains($field, '.') === false;
             })
                 ?? array_filter($this->accessibleFields, function($field) {return is_array($field) === false;})
@@ -101,7 +103,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
 
                 $query->join('LEFT', $expandingResource, $this->expands[$expandingResource]);
 
-                $this->addExpandFields($expandingResource, $query, array_filter($condition['fields'], function ($field) {
+                $this->addExpandFields($expandingResource, $query, array_filter($requestedFields, function ($field) {
                     return str_contains($field, '.') === true;
                 }));
             }
