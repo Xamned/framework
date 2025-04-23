@@ -55,7 +55,7 @@ class HttpKernel implements HttpKernelInterface
             $result = json_encode($result);
         }
 
-        $response->getBody()->write($result);
+        $response->getBody()->write((string) $result);
 
         return $response;
     }
