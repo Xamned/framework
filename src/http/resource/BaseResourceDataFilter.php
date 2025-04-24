@@ -59,9 +59,11 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
         $this->checkConditionFilter($condition);
         $this->checkConditionFields($condition);
 
-        return $this->dbConnection->select(
+        $results = $this->dbConnection->select(
             $this->buildQuery($condition)
         );
+
+        return $this->transformResults($results, $condition['expand'] ?? null);
     }
 
     /**
@@ -72,20 +74,89 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
         $this->checkConditionFilter($condition);
         $this->checkConditionFields($condition);
 
-        return $this->dbConnection->selectOne(
+        $result = $this->dbConnection->selectOne(
             $this->buildQuery($condition)
         );
+
+        return $result ? $this->transformResult($result, $condition['expand'] ?? null) : null;
+    }
+
+    private function transformResults(array $results, ?string $expand): array
+    {
+        return array_map(function($item) use ($expand) {
+            return $this->transformResult($item, $expand);
+        }, $results);
+    }
+
+    private function addExpandFields(string $expandingResource, QueryBuilderInterface $query, array $fields): void
+    {
+        foreach ($fields as $field) {
+            list($resource, $resourceField) = explode('.', $field, 2);
+
+            if ($resource === $expandingResource) {
+                $alias = $expandingResource . '__' . $resourceField;
+                $query->select([$alias => $expandingResource . '.' . $resourceField]);
+            }
+        }
+    }
+
+    private function transformResult(array $item, ?string $expand): array
+    {
+        $transformed = [];
+        $relationships = [];
+
+        if ($expand === null) {
+            return $item;
+        }
+
+        $expandingResources = explode(',', $expand);
+
+        foreach ($item as $key => $value) {
+            if (str_contains($key, '__')) {
+                list($resource, $field) = explode('__', $key, 2);
+
+                if (in_array($resource, $expandingResources)) {
+                    if (!isset($relationships[$resource])) {
+                        $relationships[$resource] = [];
+                    }
+                    $relationships[$resource][$field] = $value;
+                    continue;
+                }
+            }
+
+            $transformed[$key] = $value;
+        }
+
+        $result = $transformed;
+
+        if (!empty($relationships)) {
+            $result['relationships'] = $relationships;
+        }
+
+        return $result;
     }
 
     private function buildQuery(array $condition): QueryBuilderInterface
     {
-        $requestedFields = explode(',', $condition['fields']);
+        $requestedFields = [];
+        $requestedExpandFields = [];
+
+        if (isset($condition['fields']) === true) {
+            $requestedFields = explode(',', $condition['fields']);
+
+            $requestedExpandFields = array_filter($requestedFields, function ($field) {
+                return str_contains($field, '.') === true;
+            });
+
+            $requestedFields = array_filter($requestedFields, function ($field) {
+                return str_contains($field, '.') === false;
+            });
+        }
 
         $query = $this->queryBuilder
-            ->select(array_filter($requestedFields, function ($field) {
-                return str_contains($field, '.') === false;
-            })
-                ?? array_filter($this->accessibleFields, function($field) {return is_array($field) === false;})
+            ->select( empty($requestedFields) === true
+                ? array_filter($this->accessibleFields, function($field) {return is_array($field) === false;})
+                : $requestedFields
             )
             ->from($this->resourceName);
 
@@ -103,9 +174,11 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
 
                 $query->join('LEFT', $expandingResource, $this->expands[$expandingResource]);
 
-                $this->addExpandFields($expandingResource, $query, array_filter($requestedFields, function ($field) {
-                    return str_contains($field, '.') === true;
-                }));
+                $this->addExpandFields(
+                    $expandingResource,
+                    $query,
+                    $requestedExpandFields
+                );
             }
         }
 
@@ -131,6 +204,10 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
 
     private function checkConditionFields(array $condition): void
     {
+        if (isset($condition['fields']) === false) {
+            return;
+        }
+
         foreach (explode(',', $condition['fields']) as $field) {
             if (str_contains($field, '.') === true) {
                 list($resource, $resourceField) = explode('.', $field, 2);
@@ -161,17 +238,6 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
 
         if (array_key_exists($expand, $this->accessibleFields) === false) {
             throw new HttpBadRequestException('У ресурса ' . $expand . ' нет полей доступных к расширению');
-        }
-    }
-
-    private function addExpandFields(string $expandingResource, QueryBuilderInterface $query, array $fields): void
-    {
-        foreach ($fields as $field) {
-            list($resource, $resourceField) = explode('.', $field, 2);
-
-            if ($resource === $expandingResource) {
-                $query->select([$expandingResource . '.' . $resourceField => $expandingResource . '.' . $resourceField]);
-            }
         }
     }
 
