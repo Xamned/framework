@@ -113,6 +113,10 @@ abstract class AbstractFormRequest implements FormRequestInterface
         $values = [];
 
         foreach ($this->getAttributes() as $attribute) {
+            if ($this->skipEmptyValues === true && empty($this->$attribute) === true) {
+                continue;
+            }
+            
             $values[$attribute] = $this->$attribute;
         }
 
