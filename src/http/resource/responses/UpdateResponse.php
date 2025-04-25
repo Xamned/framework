@@ -8,7 +8,7 @@ class UpdateResponse implements CrudResultInterface
 {
     public function getStatusCode(): int
     {
-        return 200;
+        return 201;
     }
 
     public function getData(): mixed
