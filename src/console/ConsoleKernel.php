@@ -8,7 +8,7 @@ use xamned\framework\contracts\console\ConsoleInputInterface;
 use xamned\framework\contracts\console\ConsoleKernelInterface;
 use xamned\framework\contracts\console\ConsoleOutputInterface;
 use xamned\framework\contracts\container\ContainerInterface;
-use xamned\framework\contracts\ErrorHandlerInterface;
+use xamned\framework\contracts\error_handler\ErrorHandlerInterface;
 use xamned\framework\contracts\logger\LoggerInterface;
 use \Throwable;
 
@@ -30,8 +30,7 @@ class ConsoleKernel implements ConsoleKernelInterface
         private readonly string $appName,
         private readonly string $version,
         private readonly string $projectRoot,
-    )
-    {
+    ) {
         $this->initDefaultCommands();
     }
 

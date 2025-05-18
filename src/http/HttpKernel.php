@@ -2,7 +2,7 @@
 
 namespace xamned\framework\http;
 
-use xamned\framework\contracts\ErrorHandlerInterface;
+use xamned\framework\contracts\error_handler\ErrorHandlerInterface;
 use xamned\framework\contracts\event_dispatcher\EventDispatcherInterface;
 use xamned\framework\contracts\http\HttpKernelInterface;
 use xamned\framework\contracts\http\router\HTTPRouterInterface;
@@ -62,16 +62,14 @@ class HttpKernel implements HttpKernelInterface
 
     protected function handleError(Throwable $error, ?int $code = null): ResponseInterface
     {
-        $response = $this->container->get(ResponseInterface::class)->withStatus($code ?? $error->getCode());
-
         $this->eventDispatcher->trigger(LogContext::ATTACH->value, new Message('APP'));
         $this->logger->error($error->getMessage());
 
-        if ($this->errorHandler->isCompatibleWith(MessageTypeEnum::JSON->value) === true) {
-            $response = $response->withHeader('Content-Type', 'application/json');
-        }
+        $result = $this->errorHandler->handle($error);
 
-        $response->getBody()->write($this->errorHandler->handle($error));
+        $response = $this->container->get(ResponseInterface::class)->withStatus($code ?? $error->getCode());
+
+        $response->getBody()->write($result);
 
         return $response;
     }
