@@ -1,24 +1,22 @@
 <?php
 
-namespace xamned\framework\console;
+namespace xamned\framework\error_handler\renderers;
 
-use xamned\framework\contracts\ErrorHandlerInterface;
-use \Throwable;
-use xamned\framework\http\MessageTypeEnum;
+use xamned\framework\console\AnsiLineFormater;
+use xamned\framework\console\ConsoleColors;
+use xamned\framework\contracts\error_handler\ErrorRendererInterface;
 
-class ErrorHandler implements ErrorHandlerInterface
+class ConsoleErrorRenderer implements ErrorRendererInterface
 {
     public function __construct(
         private readonly AnsiLineFormater $lineFormater,
-        public string $responseFormat = MessageTypeEnum::HTML->value,
-    ) {
-    }
+    ) {}
 
-    public function handle(Throwable $e): string
+    public function render(array $data): string
     {
         $message = ' ';
 
-        foreach(explode(PHP_EOL, (string) $e) as $key => $row) {
+        foreach($data as $key => $row) {
             if ($key === 0) {
                 $message .= $this->lineFormater->format(
                     PHP_EOL . PHP_EOL . "  $row" . PHP_EOL,
@@ -38,15 +36,5 @@ class ErrorHandler implements ErrorHandlerInterface
         }
 
         return $message;
-    }
-
-    public function isCompatibleWith(string $type): bool
-    {
-        return $this->responseFormat === $type;
-    }
-
-    public function setResponseFormat(string $responseFormat): void
-    {
-        $this->responseFormat = $responseFormat;
     }
 }
