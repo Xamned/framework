@@ -44,9 +44,9 @@ class ErrorDataProcessorFactory implements ErrorDataProcessorFactoryInterface
 
     public function attach(MessageTypeEnum $type, string $processor, array $params = []): void
     {
-        if (is_subclass_of($processor, ErrorRendererInterface::class) === false) {
+        if (is_subclass_of($processor, ErrorDataProcessorInterface::class) === false) {
             throw new InvalidArgumentException(
-                "$processor не соответствует интерфейсу - " . ErrorRendererInterface::class
+                "$processor не соответствует интерфейсу - " . ErrorDataProcessorInterface::class
             );
         }
 

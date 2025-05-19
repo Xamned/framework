@@ -1,6 +1,6 @@
 <?php
 
-namespace xamned\framework\error_handler\http;
+namespace xamned\framework\error_handler;
 
 use Throwable;
 use xamned\framework\contracts\error_handler\ErrorHandlerInterface;
