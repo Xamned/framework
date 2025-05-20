@@ -26,8 +26,7 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         private readonly ContainerInterface $container,
         private readonly ValidatorFactoryInterface $validatorFactory,
         private readonly TypeCastTranslatorInterface $typeCastService,
-    ) {
-    }
+    ) {}
 
     /**
      * {@inheritdoc}
@@ -119,6 +118,11 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         foreach ($routeParts as $part) {
             preg_match('/^\??:?([^|=]+)/', $part, $matches);
             $name = $matches[1];
+
+            if (str_contains($name, '[') === true) {
+                preg_match_all('/[^][]+/', $name, $matches);
+                $name = $matches[0];
+            }
 
             preg_match_all('/\|([^|=]+)/', $part, $matches);
             $rules = $matches[1];
@@ -215,7 +219,9 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         foreach ($route->params as $param) {
             $name = $param['name'];
 
-            $value = $pathParams[$name] ?? $queryParams[$name] ?? $param['default'];
+            $value = $this->getParamValue($pathParams, $name) 
+                ?? $this->getParamValue($queryParams, $name) 
+                ?? $param['default'];
 
             if ($value === null) {
                 throw new HttpBadRequestException('В строке запроса не передан параметр объявленный как обязательный');
@@ -225,6 +231,25 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         }
 
         return $result;
+    }
+
+    private function getParamValue(array $params, array|string $name): mixed
+    {
+        if (is_string($name) === true) {
+            return $params[$name] ?? null;
+        }
+
+        $node = &$params;
+
+        foreach ($name as $key) {
+            if (isset($node[$key]) === false) {
+                return null;
+            }
+
+            $node = &$node[$key];
+        }
+
+        return $node;
     }
 
     private function mapPathParams(ServerRequestInterface $request, Route $route): array
