@@ -274,8 +274,14 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         $types = [];
 
         foreach ($route->params as $key => $param) {
+            $name = $param['name'];
+
+            if (is_array($name) === true) {
+                $name = $this->restoreParamName($name);
+            }
+
             if ($param['rules'] !== []) {
-                $types[] = $this->validateParam($param['name'], $params[$key], $param['rules']);
+                $types[] = $this->validateParam($name, $params[$key], $param['rules']);
                 continue;
             }
 
@@ -283,6 +289,22 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         }
 
         return $types;
+    }
+
+    private function restoreParamName(array $name): string
+    {
+        $result = '';
+
+        foreach ($name as $key => $part) {
+            if ($key === 0) {
+                $result .= $part;
+                continue;
+            }
+
+            $result .= "[$part]";
+        }
+
+        return $result;
     }
 
     private function validateParam(string $param, mixed $value, array $rules): string
