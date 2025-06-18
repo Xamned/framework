@@ -9,6 +9,7 @@ use xamned\framework\contracts\validator\ValidatorInterface;
 use xamned\framework\validator\rules\BooleanRule;
 use xamned\framework\validator\rules\FloatRule;
 use xamned\framework\validator\rules\IntegerRule;
+use xamned\framework\validator\rules\RegexRule;
 use xamned\framework\validator\rules\RequireRule;
 use xamned\framework\validator\rules\StringRule;
 
@@ -20,6 +21,7 @@ class ValidatorFactory implements ValidatorFactoryInterface
         'string' => StringRule::class,
         'boolean' => BooleanRule::class,
         'require' => RequireRule::class,
+        'regex' => RegexRule::class,
     ];
 
     protected string $validator = Validator::class;

@@ -9,9 +9,8 @@ class FloatRule implements ValidationRuleInterface
 {
     public function __construct(
         public readonly string $name = 'float',
-        protected string $caseLine = 'числом c плавающей точкой'
-    ) {
-    }
+        protected string $caseLine = 'должно быть числом c плавающей точкой'
+    ) {}
 
     public function getName(): string
     {

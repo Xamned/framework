@@ -9,9 +9,8 @@ class BooleanRule implements ValidationRuleInterface
 {
     public function __construct(
         public readonly string $name = 'boolean',
-        protected string $caseLine = 'булевым значением',
-    ) {
-    }
+        protected string $caseLine = 'должно быть булевым значением',
+    ) {}
 
     public function getName(): string
     {

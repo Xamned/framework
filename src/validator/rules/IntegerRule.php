@@ -9,9 +9,8 @@ class IntegerRule implements ValidationRuleInterface
 {
     public function __construct(
         public readonly string $name = 'integer',
-        protected string $caseLine = 'целым числом'
-    ) {
-    }
+        protected string $caseLine = 'должно быть целым числом'
+    ) {}
 
     public function getName(): string
     {

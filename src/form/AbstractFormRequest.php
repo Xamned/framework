@@ -44,14 +44,7 @@ abstract class AbstractFormRequest implements FormRequestInterface
      */
     public function addRule(array $attributes, array|string $rule): void
     {
-        if (is_string($rule) === true) {
-            $this->dynamicRules[] = [$attributes, $rule];
-            return;
-        }
-
-        foreach ($rule as $oneRule) {
-            $this->dynamicRules[] = [$attributes, $oneRule];
-        }
+        $this->dynamicRules[] = [$attributes, $rule];
     }
 
     /**
@@ -68,7 +61,7 @@ abstract class AbstractFormRequest implements FormRequestInterface
         }
     }
 
-    public function validateAttribute(string $rule, string $attribute): void
+    public function validateAttribute(array|string $rule, string $attribute): void
     {
         $validator = $this->validatorFactory->create([$rule]);
 
@@ -84,7 +77,7 @@ abstract class AbstractFormRequest implements FormRequestInterface
 
     public function addError(string $attribute, string $message): void
     {
-        $this->errors[] = "Значение \"$attribute\" не является $message.";
+        $this->errors[] = "Значение \"$attribute\" $message.";
     }
 
     public function getErrors(): array
