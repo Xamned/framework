@@ -9,10 +9,8 @@ class RequireRule implements ValidationRuleInterface
 {
     public function __construct(
         public readonly string $name = 'require',
-        protected string $caseLine = 'обязательным значением'
-    ) {
-
-    }
+        protected string $caseLine = 'является обязательным'
+    ) {}
 
     public function getName(): string
     {
