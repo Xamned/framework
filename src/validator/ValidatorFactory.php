@@ -41,14 +41,16 @@ class ValidatorFactory implements ValidatorFactoryInterface
             $ruleName = $rule;
             
             if (is_array($rule) === true) {
-                $ruleName = $rule[0];
-
-                unset($rule[0]);
-
                 $ruleConfig = $rule;
+
+                $ruleName = array_shift($ruleConfig);
             }
 
-            $result[] = $this->createRule($ruleName, $ruleConfig ?? []);
+            if (is_array($rule) === false) {
+                $ruleConfig = [];
+            }
+
+            $result[] = $this->createRule($ruleName, $ruleConfig);
         }
 
         return $this->container->build($this->validator, ['rules' => $result]);
@@ -65,7 +67,7 @@ class ValidatorFactory implements ValidatorFactoryInterface
         $ruleConfig = $this->rules[$name];
 
         if (is_array($ruleConfig) === false) {
-            return $this->container->build($ruleConfig);
+            return $this->container->build($ruleConfig, $config);
         }
 
         $ruleClass = $ruleConfig['className'];
