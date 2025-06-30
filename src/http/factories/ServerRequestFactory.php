@@ -103,7 +103,7 @@ final readonly class ServerRequestFactory implements ServerRequestFactoryInterfa
         $cookieString = $serverParams['HTTP_COOKIE'] ?? '';
 
         foreach (explode('; ', $cookieString) as $cookie) {
-            $pair =  explode('=', $cookie);
+            $pair =  explode('=', $cookie, 2);
             $cookieParams[$pair[0]] = $pair[1] ?? '';
         }
 
