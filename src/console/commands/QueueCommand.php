@@ -3,7 +3,7 @@
 namespace xamned\framework\console\commands;
 
 use xamned\framework\contracts\console\ConsoleCommandInterface;
-use xamned\framework\queue\Worker;
+use xamned\framework\contracts\queue\WorkerInterface;
 
 class QueueCommand implements ConsoleCommandInterface
 {
@@ -12,7 +12,7 @@ class QueueCommand implements ConsoleCommandInterface
     private static string $description = 'Команда запуска очереди';
 
     public function __construct(
-        private readonly Worker $worker,
+        private readonly WorkerInterface $worker,
     ) {
     }
 
