@@ -16,8 +16,7 @@ class RedisQueue implements QueueInterface
 
     public function push(JobInterface $job): void
     {
-        $payload = serialize($job);
-        $this->redis->rPush($this->key, $payload);
+        $this->redis->rPush($this->key, serialize($job));
     }
 
     public function pop(): ?JobInterface
@@ -34,10 +33,5 @@ class RedisQueue implements QueueInterface
     public function isEmpty(): bool
     {
         return $this->redis->lLen($this->key) === 0;
-    }
-
-    public function setKey(string $key): void
-    {
-        $this->key = $key;
     }
 }

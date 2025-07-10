@@ -18,24 +18,26 @@ class Worker implements WorkerInterface
         private readonly QueueInterface $queue,
         private readonly LoggerInterface $logger,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly float|int $minDelay = 1,
+        private readonly float|int $maxDelay = 15,
     ) {
         $this->eventDispatcher->trigger(LogContext::ATTACH->value, new Message('QUEUE'));
     }
 
     public function start(): void
     {
-        $delay = 1;
+        $delay = $this->minDelay;
 
         while ($this->active === true) {
             $result = $this->queue->pop();
 
             if ($result === null) {
                 sleep($delay);
-                $delay = min($delay * 2, 15);
+                $delay = min($delay * 2, $this->maxDelay);
                 continue;
             }
 
-            $delay = 1;
+            $delay = $this->minDelay;
 
             try {
                 $result->run();
