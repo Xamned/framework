@@ -8,9 +8,9 @@ interface ResourceWriterInterface
 
     function create(array $values): void;
 
-    function update(string|int $id, array $values): void;
+    function update(array $condition, array $values): void;
 
-    function patch(string|int $id, array $values): void;
+    function patch(array $condition, array $values): void;
 
-    function delete(string|int $id): void;
+    function delete(array $condition): void;
 }
