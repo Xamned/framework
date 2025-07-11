@@ -28,18 +28,18 @@ abstract class BaseResourceWriter implements ResourceWriterInterface
         $this->dbConnection->insert($this->resourceName, $values);
     }
 
-    public function update(int|string $id, array $values): void
+    public function update(array $condition, array $values): void
     {
-        $this->dbConnection->update($this->resourceName, $values, ['id' => $id]);
+        $this->dbConnection->update($this->resourceName, $values, $condition);
     }
 
-    public function patch(int|string $id, array $values): void
+    public function patch(array $condition, array $values): void
     {
-        $this->dbConnection->update($this->resourceName, $values, ['id' => $id]);
+        $this->dbConnection->update($this->resourceName, $values, $condition);
     }
 
-    public function delete(int|string $id): void
+    public function delete(array $condition): void
     {
-        $this->dbConnection->delete($this->resourceName, ['id' => $id]);
+        $this->dbConnection->delete($this->resourceName, $condition);
     }
 }
