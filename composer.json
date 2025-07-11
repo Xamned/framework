@@ -22,8 +22,7 @@
         "psr/container": "^2.0",
         "psr/http-factory": "^1.1",
         "php": "^8.2",
-        "league/openapi-psr7-validator": "^0.22.0",
-        "ext-redis": "*"
+        "league/openapi-psr7-validator": "^0.22.0"
     },
     "require-dev": {
         "codeception/codeception": "^5.1",
