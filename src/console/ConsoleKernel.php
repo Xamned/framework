@@ -3,6 +3,7 @@
 namespace xamned\framework\console;
 
 use xamned\framework\console\commands\ListCommand;
+use xamned\framework\console\commands\QueueCommand;
 use xamned\framework\contracts\console\ConsoleCommandInterface;
 use xamned\framework\contracts\console\ConsoleInputInterface;
 use xamned\framework\contracts\console\ConsoleKernelInterface;
@@ -123,6 +124,7 @@ class ConsoleKernel implements ConsoleKernelInterface
     {
         $defaultCommands = [
             ListCommand::class,
+            QueueCommand::class,
         ];
 
         foreach ($defaultCommands as $className) {
