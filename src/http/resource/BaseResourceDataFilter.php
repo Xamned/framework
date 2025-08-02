@@ -2,7 +2,6 @@
 
 namespace xamned\framework\http\resource;
 
-use InvalidArgumentException;
 use xamned\framework\contracts\db\DataBaseConnectionInterface;
 use xamned\framework\contracts\db\QueryBuilderInterface;
 use xamned\framework\contracts\http\resource\ResourceDataFilterInterface;
@@ -56,14 +55,11 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
      */
     public function filterAll(array $condition): array
     {
-        $this->checkConditionFilter($condition);
-        $this->checkConditionFields($condition);
+        $this->buildQuery($condition);
 
-        $results = $this->dbConnection->select(
-            $this->buildQuery($condition)
-        );
+        $data = $this->dbConnection->select($this->queryBuilder);
 
-        return $this->transformResults($results, $condition['expand'] ?? null);
+        return array_map(fn(array $item): array => $this->hydrate($item, $condition), $data);
     }
 
     /**
@@ -71,194 +67,172 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
      */
     public function filterOne(array $condition): ?array
     {
-        $this->checkConditionFilter($condition);
-        $this->checkConditionFields($condition);
+        $this->buildQuery($condition);
 
-        $result = $this->dbConnection->selectOne(
-            $this->buildQuery($condition)
-        );
+        $data = $this->dbConnection->selectOne($this->queryBuilder);
 
-        return $result ? $this->transformResult($result, $condition['expand'] ?? null) : null;
+        if ($data === null) {
+            return null;
+        }
+
+        return $this->hydrate($data, $condition);
     }
 
-    private function transformResults(array $results, ?string $expand): array
+    protected function hydrate(array $data, array $condition): array
     {
-        return array_map(function($item) use ($expand) {
-            return $this->transformResult($item, $expand);
-        }, $results);
-    }
-
-    private function addExpandFields(string $expandingResource, QueryBuilderInterface $query, array $fields): void
-    {
-        foreach ($fields as $field) {
-            list($resource, $resourceField) = explode('.', $field, 2);
-
-            if ($resource === $expandingResource) {
-                $alias = $expandingResource . '__' . $resourceField;
-                $query->select([$alias => $expandingResource . '.' . $resourceField]);
-            }
-        }
-    }
-
-    private function transformResult(array $item, ?string $expand): array
-    {
-        $transformed = [];
-        $relationships = [];
-
-        if ($expand === null) {
-            return $item;
-        }
-
-        $expandingResources = explode(',', $expand);
-
-        foreach ($item as $key => $value) {
-            if (str_contains($key, '__')) {
-                list($resource, $field) = explode('__', $key, 2);
-
-                if (in_array($resource, $expandingResources)) {
-                    if (!isset($relationships[$resource])) {
-                        $relationships[$resource] = [];
-                    }
-                    $relationships[$resource][$field] = $value;
-                    continue;
-                }
-            }
-
-            $transformed[$key] = $value;
-        }
-
-        $result = $transformed;
-
-        if (!empty($relationships)) {
-            $result['relationships'] = $relationships;
-        }
-
-        return $result;
-    }
-
-    private function buildQuery(array $condition): QueryBuilderInterface
-    {
-        $requestedFields = [];
-        $requestedExpandFields = [];
-
-        if (isset($condition['fields']) === true) {
-            $requestedFields = explode(',', $condition['fields']);
-
-            $requestedExpandFields = array_filter($requestedFields, function ($field) {
-                return str_contains($field, '.') === true;
-            });
-
-            $requestedFields = array_filter($requestedFields, function ($field) {
-                return str_contains($field, '.') === false;
-            });
-        }
-
-        $query = $this->queryBuilder
-            ->select( empty($requestedFields) === true
-                ? array_filter($this->accessibleFields, function($field) {return is_array($field) === false;})
-                : $requestedFields
-            )
-            ->from($this->resourceName);
-
-        if (isset($condition['filter']) === true) {
-            foreach ($condition['filter'] as $field => $fieldCondition) {
-                $query->where($this->mapCondition($field, $fieldCondition));
-            }
-        }
+        $expand = [];
 
         if (isset($condition['expand']) === true) {
-            $expandingResources = explode(',', $condition['expand']);
+            $expand = explode(',', $condition['expand']);
+        }
+        
+        $item = [];
 
-            foreach ($expandingResources as $expandingResource) {
-                $this->checkValidExpand($expandingResource);
+        foreach ($this->accessibleFields as $field => $value) {
+            if (is_array($value) === false) {
+                $item[$field] = $data[$field];
+                continue;
+            }
 
-                $query->join('LEFT', $expandingResource, $this->expands[$expandingResource]);
+            $resource = $field;
 
-                $this->addExpandFields(
-                    $expandingResource,
-                    $query,
-                    $requestedExpandFields
-                );
+            if (in_array($resource, $expand) === false) {
+                continue;
+            }
+
+            $item[$resource] = $this->hydrateExpand($resource, $data);
+        }
+
+        return $item;
+    }
+
+    private function hydrateExpand(string $resource, array $data): array 
+    {
+        $item = [];
+
+        foreach ($this->accessibleFields[$resource] as $field => $dbField) {
+            $alias = $this->getResourceFieldAlias($resource, $field);
+
+            if (array_key_exists($alias, $data) === false) {
+                continue;
+            }
+
+            $item[$resource][$field] = $data[$alias];
+        }
+
+        return $item;
+    }
+
+    protected function buildQuery(array $condition): void
+    {
+        $expand = [];
+
+        if (isset($condition['expand']) === true) {
+            $expand = explode(',', $condition['expand']);
+        }
+
+        $fields = isset($condition['fields']) === true
+            ? $this->parseFields($condition['fields'])
+            : $this->getDefaultFields($expand);
+
+        $this->queryBuilder
+            ->select($fields)
+            ->from($this->resourceName);
+
+        foreach ($condition['filter'] ?? [] as $field => $fieldCondition) {
+            foreach ($this->mapCondition($field, $fieldCondition) as $condition) {
+                $this->queryBuilder->where($condition);
             }
         }
 
-        return $query;
-    }
-
-    private function checkConditionFilter(array $condition): void
-    {
-        if (isset($condition['filter']) === false) {
-            return;
-        }
-
-        foreach ($condition['filter'] as $field => $fieldCondition) {
-            if (in_array($field, $this->accessibleFields) === false) {
-                throw new InvalidArgumentException('Поле ' . $field . ' недоступно');
-            }
-
-            if (in_array($field, $this->accessibleFilters) === false) {
-                throw new InvalidArgumentException('Нельзя отфильтровать ресурс по полю ' . $field);
-            }
+        foreach ($expand as $resource) {
+            $this->queryBuilder->join('LEFT', $resource, $this->expands[$resource] 
+                ?? throw new HttpBadRequestException("Расширение $resource недоступно"));
         }
     }
 
-    private function checkConditionFields(array $condition): void
+    protected function mapCondition(string $field, mixed $condition): array
     {
-        if (isset($condition['fields']) === false) {
-            return;
+        $field = $this->accessibleFilters[$field] 
+            ?? throw new HttpBadRequestException("Нельзя отфильтровать ресурс по полю $field");
+
+        if (str_contains($field, '.') === false) {
+            $field = "{$this->resourceName}.{$field}";
         }
 
-        foreach (explode(',', $condition['fields']) as $field) {
-            if (str_contains($field, '.') === true) {
-                list($resource, $resourceField) = explode('.', $field, 2);
-
-                if (array_key_exists($resource, $this->accessibleFields) === false) {
-                    throw new InvalidArgumentException('Поля ресурса ' . $resource . ' недоступны к получению');
-                }
-
-                if (in_array($resourceField, $this->accessibleFields[$resource]) === false) {
-                    throw new InvalidArgumentException('Поле ' . $resourceField . ' из ' . $resource . ' недоступно к получению');
-                }
-            } else {
-                if (array_key_exists($field, $this->accessibleFields) === false) {
-                    throw new InvalidArgumentException('Поле ' . $field . ' недоступно к получению');
-                }
-            }
-        }
-    }
-
-    /**
-     * @throws HttpBadRequestException
-     */
-    private function checkValidExpand(string $expand): void
-    {
-        if (array_key_exists($expand, $this->expands) === false) {
-            throw new HttpBadRequestException('Расширение ресурса ' . $expand . ' недоступно');
+        if (is_array($condition) === false) {
+            return [[$field => $condition]];
         }
 
-        if (array_key_exists($expand, $this->accessibleFields) === false) {
-            throw new HttpBadRequestException('У ресурса ' . $expand . ' нет полей доступных к расширению');
-        }
-    }
+        $conditions = [];
 
-    private function mapCondition(string $field, mixed $fieldCondition): array
-    {
-        $queryReadableConditions = [];
-
-        if (is_array($fieldCondition) === false) {
-            return [$field => $fieldCondition];
-        }
-
-        foreach ($fieldCondition as $operator => $conditionValue) {
-            $queryReadableConditions[] = match ($operator) {
-                '$eq', '$in' => [$field => $conditionValue],
-                '$gt' => ['>', $field, $conditionValue],
-                '$lt' => ['<', $field, $conditionValue],
-                '$ge' => ['>=', $field, $conditionValue],
-                '$le' => ['<=', $field, $conditionValue],
+        foreach ($condition as $operator => $value) {
+            $conditions[] = match ($operator) {
+                '$eq', '$in' => [$field => $value],
+                '$gt' => ['>', $field, $value],
+                '$lt' => ['<', $field, $value],
+                '$ge' => ['>=', $field, $value],
+                '$le' => ['<=', $field, $value],
             };
         }
 
-        return reset($queryReadableConditions);
+        return $conditions;
+    }
+
+    protected function parseFields(string $value): array
+    {
+        $fields = [];
+
+        foreach (explode(',', $value) as $field) {
+            if ($field === '') {
+                continue;
+            }
+
+            if (str_contains($field, '.') === true) {
+                [$resource, $resourceField] = explode('.', $field, 2);
+
+                $actualField = $this->accessibleFields[$resource][$resourceField]
+                    ?? throw new HttpBadRequestException("Поле $field недоступно к получению");
+
+                $fields[$this->getResourceFieldAlias($resource, $field)] = "{$resource}.{$actualField}";
+                continue;
+            }
+
+            $actualField = $this->accessibleFields[$field] 
+                ?? throw new HttpBadRequestException("Поле $field недоступно к получению");
+
+            $fields[$field] = "{$this->resourceName}.{$actualField}";
+        }
+
+        return $fields;
+    }
+
+    protected function getDefaultFields(array $expand): array
+    {
+        $fields = [];
+
+        foreach ($this->accessibleFields as $field => $value) {
+            if (is_array($value) === false) {
+                $fields[$field] = "{$this->resourceName}.{$value}";
+                continue;
+            }
+
+            $resource = $field;
+
+            if (in_array($resource, $expand) === false) {
+                continue;
+            }
+
+            foreach ($value as $field => $dbField) {
+                $fields[$this->getResourceFieldAlias($resource, $field)] = "{$resource}.{$dbField}";
+            }
+        }
+
+        return $fields;
+    }
+
+    protected function getResourceFieldAlias(string $resource, string $field): string
+    {
+        return $resource . ucfirst($field);
     }
 }

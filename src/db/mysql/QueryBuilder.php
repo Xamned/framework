@@ -155,9 +155,7 @@ class QueryBuilder implements MysqlQueryBuilderInterface
 
     private function bindParam(string $bind, mixed $value): string
     {
-        if (is_string($value) === true) {
-            $value = "$value";
-        }
+        $bind = str_replace('.', '__', $bind);
 
         if (isset($this->bindings[":$bind"]) === true) {
             $bind = $this->resolveBindName($bind);
