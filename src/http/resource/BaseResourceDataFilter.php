@@ -117,7 +117,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
                 continue;
             }
 
-            $item[$resource][$field] = $data[$alias];
+            $item[$field] = $data[$alias];
         }
 
         return $item;
