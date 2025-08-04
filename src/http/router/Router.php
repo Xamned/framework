@@ -400,8 +400,9 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
         $currrentMiddleware = next($middlewares);
 
         if ($currrentMiddleware === false) {
-            return function(): void {
-                return;
+            return function(ServerRequestInterface $request, ResponseInterface $response): void {
+                $this->container->attach(ResponseInterface::class, fn(): ResponseInterface => $response);
+                $this->container->attach(ServerRequestInterface::class, fn(): ServerRequestInterface => $request);
             };
         }
 

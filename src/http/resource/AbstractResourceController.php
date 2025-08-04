@@ -34,7 +34,8 @@ abstract class AbstractResourceController
             ->setResourceName($this->getResourceName())
             ->setAccessibleFields($this->getAccessibleFields())
             ->setAccessibleFilters($this->getAccessibleFilters())
-            ->setExpands($this->getExpands());
+            ->setExpands($this->getExpands())
+            ->setExpandsAliases($this->getExpandsAliases());
 
         $this->resourceWriter
             ->setResourceName($this->getResourceName());
@@ -98,6 +99,11 @@ abstract class AbstractResourceController
         return [];
     }
 
+    protected function getExpandsAliases(): array
+    {
+        return [];
+    }
+
     protected function getFormRules(ResourceActionTypesEnum $actionType): array
     {
         return [];
@@ -106,6 +112,11 @@ abstract class AbstractResourceController
     protected function getFormName(ResourceActionTypesEnum $actionType): ?string
     {
         return '';
+    }
+
+    protected function getPrimaryKey(): string
+    {
+        return 'id';
     }
 
     protected function createForm(ResourceActionTypesEnum $actionType): FormRequestInterface
@@ -123,9 +134,7 @@ abstract class AbstractResourceController
         $response = $this->container->get(ResponseInterface::class);
         $response = $response->withStatus($code, $reasonPhrase);
 
-        $this->container->attach(ResponseInterface::class, function() use ($response) {
-            return $response;
-        });
+        $this->container->attach(ResponseInterface::class, fn(): ResponseInterface => $response);
     }
 
     protected function getRelationships(): array
@@ -233,13 +242,13 @@ abstract class AbstractResourceController
             throw new HttpBadRequestException(implode(', ', $form->getErrors()));
         }
 
-        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => ['id' => $id]]);
+        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => [$this->getPrimaryKey() => $id]]);
 
         if ($resourceItem === null) {
             throw new HttpNotFoundException('Запрашиваемый ресурс не найден');
         }
 
-        $this->resourceWriter->update($id, $form->getValues());
+        $this->resourceWriter->update([$this->getPrimaryKey() => $id], $form->getValues());
 
         $this->relationshipsManager->manage($this->request, $resourceItem);
 
@@ -260,13 +269,13 @@ abstract class AbstractResourceController
             throw new HttpBadRequestException(implode(', ', $form->getErrors()));
         }
 
-        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => ['id' => $id]]);
+        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => [$this->getPrimaryKey() => $id]]);
 
         if ($resourceItem === null) {
             throw new HttpNotFoundException('Запрашиваемый ресурс не найден');
         }
 
-        $this->resourceWriter->patch($id, $form->getValues());
+        $this->resourceWriter->patch([$this->getPrimaryKey() => $id], $form->getValues());
 
         $this->relationshipsManager->manage($this->request, $resourceItem);
 
@@ -277,7 +286,7 @@ abstract class AbstractResourceController
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::DELETE);
 
-        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => ['id' => $id]]);
+        $resourceItem = $this->resourceDataFilter->filterOne(['filter' => [$this->getPrimaryKey() => $id]]);
 
         if ($resourceItem === null) {
             throw new HttpNotFoundException('Запрашиваемый ресурс не найден');
@@ -285,7 +294,7 @@ abstract class AbstractResourceController
 
         $this->relationshipsManager->manage($this->request, $resourceItem);
 
-        $this->resourceWriter->delete($id);
+        $this->resourceWriter->delete([$this->getPrimaryKey() => $id]);
 
         return new DeleteResponse();
     }

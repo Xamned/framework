@@ -14,6 +14,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 use xamned\framework\contracts\container\ContainerInterface;
 use xamned\framework\contracts\http\resource\CrudResultInterface;
+use xamned\framework\http\resource\responses\JsonResponse;
 use xamned\framework\logger\enums\LogContext;
 
 class HttpKernel implements HttpKernelInterface
@@ -48,6 +49,11 @@ class HttpKernel implements HttpKernelInterface
         if (is_subclass_of($result, CrudResultInterface::class) === true) {
             $response = $response->withStatus($result->getStatusCode());
             $result = $result->getData() ?? '';
+        }
+
+        if ($result instanceof JsonResponse) {
+            $response = $response->withHeader('Content-Type', 'application/json');
+            $result = json_encode($result->data);
         }
 
         if (is_array($result) === true || is_object($result) === true) {
