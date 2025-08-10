@@ -100,10 +100,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
                 continue;
             }
 
-            $item['relationships'][$resource] = $this->hydrateExpand(
-                $resource, 
-                $data
-            );
+            $item['relationships'][$resource] = $this->hydrateExpand($resource, $data);
         }
 
         return $item;
