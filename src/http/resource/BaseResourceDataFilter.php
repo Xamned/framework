@@ -15,7 +15,6 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     private array $accessibleFields = [];
     private array $accessibleFilters = [];
     private array $expands = [];
-    private array $expandsAliases = [];
 
     protected function setDbConnection(DataBaseConnectionInterface $dbConnection): void
     {
@@ -48,12 +47,6 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
     public function setExpands(array $expands): static
     {
         $this->expands = $expands;
-        return $this;
-    }
-
-    public function setExpandsAliases(array $expandsAliases): static
-    {
-        $this->expandsAliases = $expandsAliases;
         return $this;
     }
 
@@ -107,7 +100,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
                 continue;
             }
 
-            $item['relationships'][$this->expandsAliases[$resource] ?? $resource] = $this->hydrateExpand(
+            $item['relationships'][$resource] = $this->hydrateExpand(
                 $resource, 
                 $data
             );
