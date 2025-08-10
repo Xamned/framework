@@ -34,8 +34,7 @@ abstract class AbstractResourceController
             ->setResourceName($this->getResourceName())
             ->setAccessibleFields($this->getAccessibleFields())
             ->setAccessibleFilters($this->getAccessibleFilters())
-            ->setExpands($this->getExpands())
-            ->setExpandsAliases($this->getExpandsAliases());
+            ->setExpands($this->getExpands());
 
         $this->resourceWriter
             ->setResourceName($this->getResourceName());
