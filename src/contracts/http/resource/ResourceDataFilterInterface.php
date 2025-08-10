@@ -12,8 +12,6 @@ interface ResourceDataFilterInterface
 
     function setExpands(array $expands): static;
 
-    function setExpandsAliases(array $expandsAliases): static;
-
     /**
      * Возврат коллекции ресурсов, отфильтрованных в соответствии с условиями
      *
