@@ -345,6 +345,8 @@ class Router implements HTTPRouterInterface, MiddlewareAssignable
 
         $middlewares = array_merge($this->middlewares, $route->getMiddlewares());
 
+        $request = $request->withAttribute('params', $params);
+
         $this->applyMiddlewares($middlewares, $request, $response);
 
         if (is_callable($route->handler) === true) {
