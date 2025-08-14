@@ -5,15 +5,18 @@ namespace xamned\framework\http\resource;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use xamned\framework\contracts\container\ContainerInterface;
+use xamned\framework\contracts\event_dispatcher\EventDispatcherInterface;
 use xamned\framework\contracts\form\FormRequestInterface;
 use xamned\framework\contracts\http\FormRequestFactoryInterface;
 use xamned\framework\contracts\http\resource\ResourceDataFilterInterface;
 use xamned\framework\contracts\http\resource\ResourceWriterInterface;
 use xamned\framework\contracts\resource\RelationshipsManagerInterface;
+use xamned\framework\event_dispatcher\Message;
 use xamned\framework\form\FormRequest;
 use xamned\framework\http\exceptions\ForbiddenHttpException;
 use xamned\framework\http\exceptions\HttpBadRequestException;
 use xamned\framework\http\exceptions\HttpNotFoundException;
+use xamned\framework\http\resource\enums\ResourceEvent;
 use xamned\framework\http\resource\responses\CreateResponse;
 use xamned\framework\http\resource\responses\DeleteResponse;
 use xamned\framework\http\resource\responses\JsonResponse;
@@ -29,6 +32,7 @@ abstract class AbstractResourceController
         protected ResourceWriterInterface $resourceWriter,
         protected RelationshipsManagerInterface $relationshipsManager,
         protected ContainerInterface $container,
+        protected EventDispatcherInterface $dispatcher,
     ) {
         $this->resourceDataFilter
             ->setResourceName($this->getResourceName())
@@ -226,6 +230,11 @@ abstract class AbstractResourceController
 
         $this->relationshipsManager->manage($this->request, $resourceItem);
 
+        $this->dispatcher->trigger(
+            ResourceEvent::CREATED->eventName($this->getResourceName()), 
+            new Message($resourceItem)
+        );
+
         return new CreateResponse();
     }
 
@@ -241,13 +250,14 @@ abstract class AbstractResourceController
             throw new HttpBadRequestException(implode(', ', $form->getErrors()));
         }
 
+        $this->resourceWriter->update([$this->getPrimaryKey() => $id], $form->getValues());
+
         $resourceItem = $this->resourceDataFilter->filterOne(['filter' => [$this->getPrimaryKey() => $id]]);
 
-        if ($resourceItem === null) {
-            throw new HttpNotFoundException('Запрашиваемый ресурс не найден');
-        }
-
-        $this->resourceWriter->update([$this->getPrimaryKey() => $id], $form->getValues());
+        $this->dispatcher->trigger(
+            ResourceEvent::UPDATED->eventName($this->getResourceName()),
+            new Message($resourceItem)
+        );
 
         $this->relationshipsManager->manage($this->request, $resourceItem);
 
@@ -268,13 +278,14 @@ abstract class AbstractResourceController
             throw new HttpBadRequestException(implode(', ', $form->getErrors()));
         }
 
+        $this->resourceWriter->patch([$this->getPrimaryKey() => $id], $form->getValues());
+        
         $resourceItem = $this->resourceDataFilter->filterOne(['filter' => [$this->getPrimaryKey() => $id]]);
 
-        if ($resourceItem === null) {
-            throw new HttpNotFoundException('Запрашиваемый ресурс не найден');
-        }
-
-        $this->resourceWriter->patch([$this->getPrimaryKey() => $id], $form->getValues());
+        $this->dispatcher->trigger(
+            ResourceEvent::PATCHED->eventName($this->getResourceName()),
+            new Message($resourceItem)
+        );
 
         $this->relationshipsManager->manage($this->request, $resourceItem);
 
@@ -294,6 +305,11 @@ abstract class AbstractResourceController
         $this->relationshipsManager->manage($this->request, $resourceItem);
 
         $this->resourceWriter->delete([$this->getPrimaryKey() => $id]);
+
+        $this->dispatcher->trigger(
+            ResourceEvent::DELETED->eventName($this->getResourceName()),
+            new Message($resourceItem)
+        );
 
         return new DeleteResponse();
     }
