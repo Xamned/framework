@@ -75,7 +75,7 @@ class RedisCache implements CacheStorageInterface
         return $values;
     }
 
-    public function setMultiple(iterable $values, null|int|DateInterval $ttl = null): bool
+    public function setMultiple(iterable $values, $ttl = null): bool
     {
         if ($ttl instanceof DateInterval) {
             $ttl = (new DateTimeImmutable())->add($ttl)->getTimestamp() - time();
