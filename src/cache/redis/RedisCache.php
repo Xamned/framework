@@ -11,7 +11,7 @@ use xamned\framework\contracts\cache\CacheStorageInterface;
 class RedisCache implements CacheStorageInterface
 {
     public function __construct(
-        private Redis $redis,
+        private readonly Redis $redis,
     ) {
     }
 
@@ -27,7 +27,7 @@ class RedisCache implements CacheStorageInterface
         return unserialize($value);
     }
 
-    public function set(string $key, mixed $value, null|int|DateInterval $ttl = null): bool
+    public function set(string $key, mixed $value, $ttl = null): bool
     {
         $this->assertValidKey($key);
 
