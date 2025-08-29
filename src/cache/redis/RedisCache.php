@@ -67,9 +67,10 @@ class RedisCache implements CacheStorageInterface
             $item = $raw[$i];
             if ($item === false || $item === null) {
                 $values[$key] = $default;
-            } else {
-                $values[$key] = unserialize($item);
+                continue;
             }
+
+            $values[$key] = unserialize($item);
         }
 
         return $values;
@@ -88,9 +89,10 @@ class RedisCache implements CacheStorageInterface
             $serialized = serialize($value);
             if ($ttl !== null) {
                 $pipeline->setex($key, (int)$ttl, $serialized);
-            } else {
-                $pipeline->set($key, $serialized);
+                continue;
             }
+
+            $pipeline->set($key, $serialized);
         }
         $result = $pipeline->exec();
 
