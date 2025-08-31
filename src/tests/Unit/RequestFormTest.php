@@ -185,6 +185,62 @@ class RequestFormTest extends Unit
         $this->assertNotEmpty($finalForm->getErrors());
     }
 
+    public function testValidDateRule(): void
+    {
+        $finalForm = $this->prepareFormWithRulesAndBody(
+            [
+                [['foo'], 'date'],
+            ],
+            ['attributes' => ['foo' => '2025-09-06T01:37:24.317Z']],
+        );
+
+        $finalForm->validate();
+
+        $this->assertEmpty($finalForm->getErrors());
+    }
+
+    public function testInvalidDateRule(): void
+    {
+        $finalForm = $this->prepareFormWithRulesAndBody(
+            [
+                [['foo'], 'date'],
+            ],
+            ['attributes' => ['foo' => '2025-09-06']],
+        );
+
+        $finalForm->validate();
+
+        $this->assertNotEmpty($finalForm->getErrors());
+    }
+
+    public function testValidExistRule(): void
+    {
+        $finalForm = $this->prepareFormWithRulesAndBody(
+            [
+                [['foo'], ['exist', 'table' => 'bar']],
+            ],
+            ['attributes' => ['foo' => 1]],
+        );
+
+        $finalForm->validate();
+
+        $this->assertEmpty($finalForm->getErrors());
+    }
+
+    public function testInvalidExistRule(): void
+    {
+        $finalForm = $this->prepareFormWithRulesAndBody(
+            [
+                [['foo'], ['exist', 'table' => 'bar']],
+            ],
+            ['attributes' => ['foo' => 2]],
+        );
+
+        $finalForm->validate();
+
+        $this->assertNotEmpty($finalForm->getErrors());
+    }
+
     private function prepareFormWithRulesAndBody(
         array $rules,
         array $body,
