@@ -2,13 +2,13 @@
 
 namespace xamned\framework\validator;
 
-use app\components\validator\rules\DateRule;
-use app\components\validator\rules\ExistRule;
 use xamned\framework\contracts\container\ContainerInterface;
 use xamned\framework\contracts\validator\ValidationRuleInterface;
 use xamned\framework\contracts\validator\ValidatorFactoryInterface;
 use xamned\framework\contracts\validator\ValidatorInterface;
 use xamned\framework\validator\rules\BooleanRule;
+use xamned\framework\validator\rules\DateRule;
+use xamned\framework\validator\rules\ExistRule;
 use xamned\framework\validator\rules\FloatRule;
 use xamned\framework\validator\rules\IntegerRule;
 use xamned\framework\validator\rules\RegexRule;

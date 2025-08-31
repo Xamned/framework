@@ -1,6 +1,6 @@
 <?php
 
-namespace app\components\validator\rules;
+namespace xamned\framework\validator\rules;
 
 use xamned\framework\contracts\container\ContainerInterface;
 use xamned\framework\contracts\db\DataBaseConnectionInterface;
