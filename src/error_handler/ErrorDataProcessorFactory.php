@@ -6,7 +6,6 @@ use InvalidArgumentException;
 use xamned\framework\contracts\container\ContainerInterface;
 use xamned\framework\contracts\error_handler\ErrorDataProcessorFactoryInterface;
 use xamned\framework\contracts\error_handler\ErrorDataProcessorInterface;
-use xamned\framework\contracts\error_handler\ErrorRendererInterface;
 use xamned\framework\error_handler\MessageTypeEnum;
 use xamned\framework\error_handler\processors\ConsoleErrorDataProcessor;
 use xamned\framework\error_handler\processors\HtmlErrorDataProcessor;
@@ -19,16 +18,20 @@ class ErrorDataProcessorFactory implements ErrorDataProcessorFactoryInterface
         MessageTypeEnum::HTML->value => HtmlErrorDataProcessor::class,
         MessageTypeEnum::JSON->value => JsonErrorDataProcessor::class,
     ];
-    private array $params = [];
+    private array $processorsParams = [];
 
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly string $envMode,
+        array $processors = [],
+        array $processorsParams = [],
     ) {
-        $envParams = ['envMode' => $this->envMode];
+        $this->processors = array_merge($this->processors, $processors);
 
-        $this->params[MessageTypeEnum::HTML->value] = $envParams;
-        $this->params[MessageTypeEnum::JSON->value] = $envParams;
+        $this->processorsParams[MessageTypeEnum::HTML->value]['envMode'] = $this->envMode;
+        $this->processorsParams[MessageTypeEnum::JSON->value]['envMode'] = $this->envMode;
+
+        $this->processorsParams = array_merge_recursive($this->processorsParams, $processorsParams);
     }
 
     public function create(MessageTypeEnum $type): ErrorDataProcessorInterface
@@ -39,7 +42,7 @@ class ErrorDataProcessorFactory implements ErrorDataProcessorFactoryInterface
             throw new InvalidArgumentException("Не найден обработчик данных для типа сообщений - {$type->value}");
         }
 
-        return $this->container->build($processor, $this->params[$type->value] ?? []);
+        return $this->container->build($processor, $this->processorsParams[$type->value] ?? []);
     }
 
     public function attach(MessageTypeEnum $type, string $processor, array $params = []): void
@@ -51,11 +54,11 @@ class ErrorDataProcessorFactory implements ErrorDataProcessorFactoryInterface
         }
 
         $this->processors[$type->value] = $processor;
-        $this->params[$type->value] = $params;
+        $this->processorsParams[$type->value] = $params;
     }
 
     public function detach(MessageTypeEnum $type): void
     {
-        unset($this->processors[$type->value], $this->params[$type->value]);
+        unset($this->processors[$type->value], $this->processorsParams[$type->value]);
     }
 }

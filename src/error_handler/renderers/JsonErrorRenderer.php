@@ -15,12 +15,10 @@ class JsonErrorRenderer implements ErrorRendererInterface
     public function render(array $data): string
     {
         /** @var ResponseInterface */
-        $response = $this->container->get(ResponseInterface::class);
-        $response = $response->withHeader('Content-Type', 'application/json');
+        $response = $this->container->get(ResponseInterface::class)
+            ->withHeader('Content-Type', 'application/json');
 
-        $this->container->attach(ResponseInterface::class, function() use ($response): ResponseInterface {
-            return $response;
-        });
+        $this->container->attach(ResponseInterface::class, fn(): ResponseInterface => $response);
 
         return json_encode($data);
     }
