@@ -2,6 +2,8 @@
 
 namespace xamned\framework\validator;
 
+use app\components\validator\rules\DateRule;
+use app\components\validator\rules\ExistRule;
 use xamned\framework\contracts\container\ContainerInterface;
 use xamned\framework\contracts\validator\ValidationRuleInterface;
 use xamned\framework\contracts\validator\ValidatorFactoryInterface;
@@ -22,6 +24,8 @@ class ValidatorFactory implements ValidatorFactoryInterface
         'boolean' => BooleanRule::class,
         'require' => RequireRule::class,
         'regex' => RegexRule::class,
+        'date' => DateRule::class,
+        'exist' => ExistRule::class,
     ];
 
     protected string $validator = Validator::class;

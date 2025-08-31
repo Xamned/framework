@@ -2,6 +2,7 @@
 
 namespace xamned\framework\validator;
 
+use DateTime;
 use xamned\framework\contracts\validator\TypeCastTranslatorInterface;
 
 class TypeCastTranslator implements TypeCastTranslatorInterface
@@ -20,6 +21,7 @@ class TypeCastTranslator implements TypeCastTranslatorInterface
             'bool' => (bool) $value,
             'json_object' => json_decode($value),
             'json_array' => json_decode($value, true),
+            'date' => (new DateTime($value))->format('Y-m-d H:i:s'),
             default => $value,
         };
     }
