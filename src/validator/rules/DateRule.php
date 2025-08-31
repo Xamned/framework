@@ -1,6 +1,6 @@
 <?php
 
-namespace app\components\validator\rules;
+namespace xamned\framework\validator\rules;
 
 use DateTime;
 use xamned\framework\contracts\validator\ValidationRuleInterface;
