@@ -36,7 +36,14 @@ class AttributeFilterRule implements ValidationRuleInterface
                 throw new ValidationException($this->caseLine . implode(', ', $this->validOperators));
             }
 
-            $this->validateValue($realValue);
+            if (is_array($realValue) === false) {
+                $this->validateValue($value);
+                continue;
+            }
+
+            foreach ($realValue as $inValue) {
+                $this->validateValue($inValue);
+            }
         }
     }
 
