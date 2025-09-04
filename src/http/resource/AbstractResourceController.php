@@ -49,6 +49,7 @@ abstract class AbstractResourceController
     }
 
     protected $forms = [
+        ResourceActionTypesEnum::INDEX->value => FormRequest::class,
         ResourceActionTypesEnum::CREATE->value => FormRequest::class,
         ResourceActionTypesEnum::UPDATE->value => FormRequest::class,
         ResourceActionTypesEnum::PATCH->value => FormRequest::class,
@@ -180,6 +181,16 @@ abstract class AbstractResourceController
     public function actionList(): JsonResponse
     {
         $this->checkCallAvailability(ResourceActionTypesEnum::INDEX);
+
+        $form = $this->createForm(ResourceActionTypesEnum::INDEX);
+
+        $form->load($this->request->getQueryParams()['filter']);
+
+        $form->validate();
+
+        if (empty($form->getErrors()) === false) {
+            throw new HttpBadRequestException(implode(', ', $form->getErrors()));
+        }
         
         $data = $this->resourceDataFilter->filterAll($this->request->getQueryParams());
 
