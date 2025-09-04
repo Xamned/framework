@@ -37,7 +37,7 @@ class AttributeFilterRule implements ValidationRuleInterface
             }
 
             if (is_array($realValue) === false) {
-                $this->validateValue($value);
+                $this->validateValue($realValue);
                 continue;
             }
 
