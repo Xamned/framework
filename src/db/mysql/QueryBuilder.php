@@ -104,6 +104,10 @@ class QueryBuilder implements MysqlQueryBuilderInterface
             return $this->whereIn($column, $value);
         }
 
+        if ($operator === 'like') {
+            return $this->whereLike($column, $value);
+        }
+
         if (ComparisonOperator::tryFrom($operator) !== null) {
             return $this->whereComparison($operator, $column, $value);
         }
@@ -149,6 +153,13 @@ class QueryBuilder implements MysqlQueryBuilderInterface
         $list = implode(', ', $list);
 
         $this->blocks['where'][] = "$column IN($list)";
+
+        return $this;
+    }
+
+    public function whereLike(string $column, mixed $value): static
+    {
+        $this->blocks['where'][] = "$column LIKE '%$value%'";
 
         return $this;
     }

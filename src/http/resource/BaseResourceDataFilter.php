@@ -173,6 +173,7 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
                 '$lt' => ['<', $field, $value],
                 '$ge' => ['>=', $field, $value],
                 '$le' => ['<=', $field, $value],
+                '$like' => ['like', $field, $value],
             };
         }
 
