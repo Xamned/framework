@@ -169,11 +169,11 @@ abstract class BaseResourceDataFilter implements ResourceDataFilterInterface
         foreach ($condition as $operator => $value) {
             $conditions[] = match ($operator) {
                 '$eq', '$in' => [$field => $value],
-                '$gt' => ['>', $field, $value],
-                '$lt' => ['<', $field, $value],
-                '$ge' => ['>=', $field, $value],
-                '$le' => ['<=', $field, $value],
-                '$like' => ['like', $field, $value],
+                '$gt' => [['>', $field, $value]],
+                '$lt' => [['<', $field, $value]],
+                '$ge' => [['>=', $field, $value]],
+                '$le' => [['<=', $field, $value]],
+                '$like' => [['like', $field, $value]],
             };
         }
 
