@@ -15,6 +15,7 @@ use xamned\framework\validator\rules\RegexRule;
 use xamned\framework\validator\rules\RequireRule;
 use xamned\framework\validator\rules\resource\AttributeFilterRule;
 use xamned\framework\validator\rules\StringRule;
+use xamned\framework\validator\rules\UniqueRule;
 
 class ValidatorFactory implements ValidatorFactoryInterface
 {
@@ -27,6 +28,7 @@ class ValidatorFactory implements ValidatorFactoryInterface
         'regex' => RegexRule::class,
         'date' => DateRule::class,
         'exist' => ExistRule::class,
+        'unique' => UniqueRule::class,
         'attributeFilter' => AttributeFilterRule::class,
     ];
 

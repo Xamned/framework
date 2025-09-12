@@ -7,6 +7,7 @@
 и придерживается [правил версионирования](https://semver.org/spec/v2.0.0.html).
 
 - Реализовано:
+    - Правило валидации уникальных значений (UniqueRule)
     - Валидация типов данных введенных параметров на уровне HTTPRouterInterface
     - Класс ресурса (Resource)
     - Контракт фабрики валидаторов (ValidatorFactoryInterface) и его реализация (ValidatorFactory)
