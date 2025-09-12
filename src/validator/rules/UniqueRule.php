@@ -42,10 +42,10 @@ class UniqueRule implements ValidationRuleInterface
 
         $query = $this->container->get(QueryBuilderInterface::class)
             ->from($this->table)
-            ->select(['id' => 'id'])
+            ->select(['cnt' => 'COUNT(*)'])
             ->where($conditions);
 
-        if ($this->db->selectOne($query) !== null) {
+        if ((bool)($this->db->selectOne($query)['cnt']) === true) {
             throw new ValidationException(sprintf($this->caseLine, $this->table, implode(',', $this->columns)));
         }
     }
