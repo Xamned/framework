@@ -184,7 +184,7 @@ abstract class AbstractResourceController
 
         $form = $this->createForm(ResourceActionTypesEnum::INDEX);
 
-        $form->load($this->request->getQueryParams()['filter']);
+        $form->load($this->request->getQueryParams()['filter'] ?? []);
 
         $form->validate();
 
