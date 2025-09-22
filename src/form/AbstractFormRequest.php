@@ -67,6 +67,10 @@ abstract class AbstractFormRequest implements FormRequestInterface
 
         $validator->validate($this->$attribute);
 
+        if ($this->skipEmptyValues === true && empty($this->$attribute) === true) {
+            return;
+        }
+
         if ($validator->hasErrors() === true) {
             $this->addError($attribute, $validator->getErrorsCasesLine());
             return;
