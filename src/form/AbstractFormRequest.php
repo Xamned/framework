@@ -68,7 +68,9 @@ abstract class AbstractFormRequest implements FormRequestInterface
         $rules = array_merge($this->rules(), $this->dynamicRules);
 
         foreach ($rules as [$attributes, $rule]) {
-            if (array_key_exists(is_array($rule) === true ? $rule[0] : $rule, $this->getRulesForPassingAllAttributes()) === true) {
+            $key = is_array($rule) === true ? $rule[0] : $rule;
+
+            if (array_key_exists($key, $this->getRulesForPassingAllAttributes()) === true) {
                 $this->validateAttribute($rule, $attributes);
 
                 continue;
