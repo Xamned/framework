@@ -14,9 +14,7 @@ class UniqueRule implements ValidationRuleInterface
         private readonly ContainerInterface $container,
         private readonly DataBaseConnectionInterface $db,
         public string $table,
-        /** @var string[] */
-        public array $columns,
-        public string $caseLine = 'значение должно быть уникальным в %s.%s'
+        public string $caseLine = 'значение должно быть уникальным в %s'
     ) {}
 
     public function getName(): string
@@ -30,14 +28,10 @@ class UniqueRule implements ValidationRuleInterface
             return;
         }
 
-        $values = is_array($value) ? $value : [$this->columns[0] => $value];
-
         $conditions = [];
-        foreach ($this->columns as $column) {
-            if (array_key_exists($column, $values) === false) {
-                throw new ValidationException(sprintf('Не передано значение для колонки "%s"', $column));
-            }
-            $conditions[$column] = $values[$column];
+
+        foreach ($value as $attributeName => $attributeValue) {
+            $conditions[$attributeName] = $attributeValue;
         }
 
         $query = $this->container->get(QueryBuilderInterface::class)
@@ -46,7 +40,7 @@ class UniqueRule implements ValidationRuleInterface
             ->where($conditions);
 
         if ((bool)($this->db->selectOne($query)['cnt']) === true) {
-            throw new ValidationException(sprintf($this->caseLine, $this->table, implode(',', $this->columns)));
+            throw new ValidationException(sprintf($this->caseLine, $this->table));
         }
     }
 }

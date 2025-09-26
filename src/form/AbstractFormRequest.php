@@ -6,6 +6,7 @@ use xamned\framework\contracts\form\FormRequestInterface;
 use xamned\framework\contracts\validator\TypeCastTranslatorInterface;
 use xamned\framework\contracts\validator\ValidatorFactoryInterface;
 use xamned\framework\validator\exceptions\ValidationException;
+use xamned\framework\validator\rules\UniqueRule;
 
 abstract class AbstractFormRequest implements FormRequestInterface
 {
@@ -17,6 +18,18 @@ abstract class AbstractFormRequest implements FormRequestInterface
         private readonly ValidatorFactoryInterface $validatorFactory,
         private readonly TypeCastTranslatorInterface $typeCastService,
     ) {}
+
+    /**
+     * Возвращает список правил, в которые атрибуты передаются все сразу, а не по одному
+     *
+     * @return array
+     */
+    private function getRulesForPassingAllAttributes(): array
+    {
+        return [
+            'unique' => UniqueRule::class,
+        ];
+    }
     
     /**
      * Возврат правил валидации формы
@@ -55,28 +68,50 @@ abstract class AbstractFormRequest implements FormRequestInterface
         $rules = array_merge($this->rules(), $this->dynamicRules);
 
         foreach ($rules as [$attributes, $rule]) {
+            if (array_key_exists(is_array($rule) === true ? $rule[0] : $rule, $this->getRulesForPassingAllAttributes()) === true) {
+                $this->validateAttribute($rule, $attributes);
+
+                continue;
+            }
+
             foreach ($attributes as $attribute) {
                 $this->validateAttribute($rule, $attribute);
             }
         }
     }
 
-    public function validateAttribute(array|string $rule, string $attribute): void
+    public function validateAttribute(array|string $rule, array|string $attribute): void
     {
         $validator = $this->validatorFactory->create([$rule]);
 
-        $validator->validate($this->$attribute);
+        if (is_array($attribute) === true) {
+            $attributeValues = $this->getAttributesValueByArray($attribute);
+
+            $validator->validate($attributeValues);
+        }
+
+        if (is_array($attribute) === false) {
+            $validator->validate($this->$attribute);
+        }
 
         if ($validator->hasErrors() === true) {
             $this->addError($attribute, $validator->getErrorsCasesLine());
             return;
         }
 
-        $this->$attribute = $this->typeCastService->translate($this->$attribute, $validator->getPassedRules()[0]);
+        if (is_array($attribute) === false) {
+            $this->$attribute = $this->typeCastService->translate($this->$attribute, $validator->getPassedRules()[0]);
+        }
     }
 
-    public function addError(string $attribute, string $message): void
+    public function addError(array|string $attribute, string $message): void
     {
+        if (is_array($attribute) === true) {
+            $this->errors[] = 'Значения ' . implode(',', $attribute) . " $message";
+
+            return;
+        }
+
         $this->errors[] = "Значение \"$attribute\" $message.";
     }
 
@@ -135,5 +170,16 @@ abstract class AbstractFormRequest implements FormRequestInterface
         foreach($this->getAttributes() as $attribute) {
             $this->$attribute = $data[$attribute] ?? null;
         }
+    }
+
+    private function getAttributesValueByArray(array $attributes): array
+    {
+        $result = [];
+
+        foreach ($attributes as $attribute) {
+            $result[$attribute] = $this->$attribute;
+        }
+
+        return $result;
     }
 }
