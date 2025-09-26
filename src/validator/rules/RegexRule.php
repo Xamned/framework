@@ -9,7 +9,6 @@ use xamned\framework\validator\exceptions\ValidationException;
 class RegexRule implements ValidationRuleInterface
 {
     public function __construct(
-        public readonly string $name = 'regex',
         protected string $caseLine = 'должно cоответствовать паттерну %s',
         protected string $pattern = '',
         protected bool $matchValue = false,
@@ -17,7 +16,7 @@ class RegexRule implements ValidationRuleInterface
 
     public function getName(): string
     {
-        return $this->name;
+        return 'regex';
     }
 
     public function execute(mixed $value): void

@@ -8,13 +8,12 @@ use xamned\framework\validator\exceptions\ValidationException;
 class FloatRule implements ValidationRuleInterface
 {
     public function __construct(
-        public readonly string $name = 'float',
         protected string $caseLine = 'должно быть числом c плавающей точкой'
     ) {}
 
     public function getName(): string
     {
-        return $this->name;
+        return 'float';
     }
 
     public function execute(mixed $value): void

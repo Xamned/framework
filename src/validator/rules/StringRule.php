@@ -8,7 +8,6 @@ use xamned\framework\validator\exceptions\ValidationException;
 class StringRule implements ValidationRuleInterface
 {
     public function __construct(
-        public readonly string $name = 'string',
         protected string $caseLine = 'должно быть строкой',
         protected ?int $min = null,
         protected string $minCaseLine = 'должно быть не меньше %s',
@@ -18,7 +17,7 @@ class StringRule implements ValidationRuleInterface
 
     public function getName(): string
     {
-        return $this->name;
+        return 'string';
     }
 
     public function execute(mixed $value): void
